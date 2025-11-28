@@ -1624,7 +1624,49 @@
 
 ---
 
-### 9.2 채팅방 생성/조회
+### 9.2 일반 사용자용 채팅방 목록 조회
+
+**GET** `/api/me/chat-rooms/sent`
+
+**Query Parameters:**
+- `userId` (required): 사용자 ID
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "clubId": 1,
+      "clubName": "알고리즘 동아리",
+      "userId": 10,
+      "userName": "김학생",
+      "lastMessage": "안녕하세요!",
+      "lastMessageTime": "2024-12-01T10:00:00",
+      "unreadCount": 0,
+      "createdAt": "2024-12-01T09:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 1
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 일반 사용자가 자신이 문의한 채팅방 목록을 조회합니다
+- 각 채팅방의 마지막 메시지와 읽지 않은 메시지 개수(`unreadCount`)를 포함합니다
+- `unreadCount`는 회장이 보낸 메시지 개수로 계산됩니다 (향후 읽음 처리 기능 추가 시 수정 예정)
+- 회장용 채팅방 목록 조회 API(`GET /api/me/chat-rooms`)와 함께 사용하여 문의한 것과 문의받은 것을 모두 표시할 수 있습니다
+
+---
+
+### 9.3 채팅방 생성/조회
 
 **GET** `/api/clubs/{clubId}/chat-rooms`
 
@@ -1656,7 +1698,7 @@
 
 ---
 
-### 9.3 채팅방 메시지 조회
+### 9.4 채팅방 메시지 조회
 
 **GET** `/api/chat-rooms/{chatRoomId}/messages`
 
@@ -1697,7 +1739,7 @@
 
 ---
 
-### 9.4 채팅 메시지 전송
+### 9.5 채팅 메시지 전송
 
 **POST** `/api/chat-rooms/{chatRoomId}/messages`
 

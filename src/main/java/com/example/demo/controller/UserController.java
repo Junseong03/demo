@@ -34,7 +34,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // 회장용 채팅방 목록 조회
+    // 회장용 채팅방 목록 조회 (문의받은 채팅방)
     @GetMapping("/chat-rooms")
     public ResponseEntity<PageResponse<ChatRoomListDto>> getChatRooms(
             @RequestParam Long userId,
@@ -42,6 +42,17 @@ public class UserController {
             @RequestParam(required = false, defaultValue = "100") int size) {
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<ChatRoomListDto> response = chatService.getChatRoomsForPresident(userId, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    // 일반 사용자용 채팅방 목록 조회 (문의한 채팅방)
+    @GetMapping("/chat-rooms/sent")
+    public ResponseEntity<PageResponse<ChatRoomListDto>> getSentChatRooms(
+            @RequestParam Long userId,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "100") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ChatRoomListDto> response = chatService.getChatRoomsForUser(userId, pageable);
         return ResponseEntity.ok(response);
     }
 }

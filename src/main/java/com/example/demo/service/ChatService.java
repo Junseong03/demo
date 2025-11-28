@@ -161,5 +161,50 @@ public class ChatService {
                 .totalElements(chatRoomPage.getTotalElements())
                 .build();
     }
+
+    // 일반 사용자용 채팅방 목록 조회 (자신이 문의한 채팅방)
+    public PageResponse<ChatRoomListDto> getChatRoomsForUser(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 일반 사용자가 생성한 채팅방 목록 조회
+        Page<ChatRoom> chatRoomPage = chatRoomRepository.findByUserId(userId, pageable);
+
+        // 각 채팅방의 마지막 메시지와 읽지 않은 메시지 개수 조회
+        List<ChatRoomListDto> content = chatRoomPage.getContent().stream()
+                .map(chatRoom -> {
+                    // 마지막 메시지 조회
+                    String lastMessage = null;
+                    LocalDateTime lastMessageTime = null;
+                    List<ChatMessage> lastMessages = chatMessageRepository.findLastMessageByChatRoomId(
+                            chatRoom.getId(), PageRequest.of(0, 1));
+                    if (!lastMessages.isEmpty()) {
+                        ChatMessage lastMsg = lastMessages.get(0);
+                        lastMessage = lastMsg.getMessage();
+                        lastMessageTime = lastMsg.getTimestamp();
+                    }
+
+                    // 읽지 않은 메시지 개수 (회장이 보낸 메시지 개수로 계산)
+                    ClubMember president = clubMemberRepository.findByClubIdAndRole(
+                            chatRoom.getClub().getId(), ClubMember.MemberRole.PRESIDENT)
+                            .orElse(null);
+                    Long unreadCount = 0L;
+                    if (president != null) {
+                        // 회장이 보낸 메시지 개수 (일반 사용자가 읽지 않은 메시지)
+                        unreadCount = chatMessageRepository.countByChatRoomIdAndSenderId(
+                                chatRoom.getId(), president.getUser().getId());
+                    }
+
+                    return ChatRoomListDto.from(chatRoom, lastMessage, lastMessageTime, unreadCount.intValue());
+                })
+                .collect(Collectors.toList());
+
+        return PageResponse.<ChatRoomListDto>builder()
+                .content(content)
+                .page(chatRoomPage.getNumber())
+                .size(chatRoomPage.getSize())
+                .totalElements(chatRoomPage.getTotalElements())
+                .build();
+    }
 }
 

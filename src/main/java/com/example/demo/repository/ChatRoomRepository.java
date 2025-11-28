@@ -27,5 +27,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     
     // 특정 동아리의 모든 채팅방 조회 (회장용)
     List<ChatRoom> findByClubId(Long clubId);
+    
+    // 일반 사용자가 생성한 채팅방 목록 조회
+    @Query("SELECT cr FROM ChatRoom cr WHERE cr.user.id = :userId ORDER BY cr.createdAt DESC")
+    Page<ChatRoom> findByUserId(@Param("userId") Long userId, Pageable pageable);
 }
 

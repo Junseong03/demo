@@ -22,5 +22,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     
     // 채팅방의 읽지 않은 메시지 개수 (현재는 전체 메시지 개수로 반환, 추후 읽음 처리 기능 추가 시 수정)
     Long countByChatRoomId(Long chatRoomId);
+    
+    // 특정 채팅방에서 특정 사용자가 보낸 메시지 개수
+    Long countByChatRoomIdAndSenderId(Long chatRoomId, Long senderId);
 }
 
