@@ -12,11 +12,13 @@ spring:
       hibernate:
         format_sql: true
         show_sql: true
+        use_sql_comments: true
     open-in-view: false
 
 logging:
   level:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
 
   h2:
     console:
