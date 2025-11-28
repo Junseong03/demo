@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.*;
+import com.example.demo.service.ActivityService;
 import com.example.demo.service.ClubService;
 import com.example.demo.service.FileStorageService;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import java.io.InputStream;
 @Slf4j
 public class ClubController {
     private final ClubService clubService;
+    private final ActivityService activityService;
     private final FileStorageService fileStorageService;
 
     @GetMapping
@@ -282,6 +284,25 @@ public class ClubController {
             @RequestParam Long userId) {
         clubService.removeMember(clubId, memberUserId, userId);
         return ResponseEntity.ok().build();
+    }
+
+    // 동아리 활동 생성 (회장, 부대표, 관리자만 가능)
+    @PostMapping("/{clubId}/activities")
+    public ResponseEntity<ActivityDetailDto> createActivity(
+            @PathVariable Long clubId,
+            @RequestParam Long userId,
+            @Valid @RequestBody CreateActivityRequest request) {
+        ActivityDetailDto activity = activityService.createActivity(clubId, userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(activity);
+    }
+
+    // 동아리 활동 상세 조회 (동아리 컨텍스트)
+    @GetMapping("/{clubId}/activities/{activityId}")
+    public ResponseEntity<ActivityDetailDto> getClubActivityDetail(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId) {
+        ActivityDetailDto activity = activityService.getClubActivityDetail(clubId, activityId);
+        return ResponseEntity.ok(activity);
     }
 }
 
