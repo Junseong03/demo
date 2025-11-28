@@ -3,12 +3,14 @@ package com.example.demo.controller;
 import com.example.demo.dto.ActivityDetailDto;
 import com.example.demo.dto.ActivityDto;
 import com.example.demo.dto.ActivityImageResponse;
+import com.example.demo.dto.CreateActivityRequest;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.UpdateActivityRequest;
 import com.example.demo.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,25 @@ public class ActivityController {
     @GetMapping("/{activityId}")
     public ResponseEntity<ActivityDetailDto> getActivityDetail(@PathVariable Long activityId) {
         ActivityDetailDto activity = activityService.getActivityDetail(activityId);
+        return ResponseEntity.ok(activity);
+    }
+
+    // 동아리 활동 생성 (회장, 부대표, 관리자만 가능)
+    @PostMapping("/clubs/{clubId}/activities")
+    public ResponseEntity<ActivityDetailDto> createActivity(
+            @PathVariable Long clubId,
+            @RequestParam Long userId,
+            @Valid @RequestBody CreateActivityRequest request) {
+        ActivityDetailDto activity = activityService.createActivity(clubId, userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(activity);
+    }
+
+    // 동아리 활동 상세 조회 (동아리 컨텍스트)
+    @GetMapping("/clubs/{clubId}/activities/{activityId}")
+    public ResponseEntity<ActivityDetailDto> getClubActivityDetail(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId) {
+        ActivityDetailDto activity = activityService.getClubActivityDetail(clubId, activityId);
         return ResponseEntity.ok(activity);
     }
 

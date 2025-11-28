@@ -97,6 +97,64 @@ public class ActivityService {
         return ActivityDetailDto.from(activity);
     }
 
+    // 동아리 활동 상세 조회 (동아리 컨텍스트)
+    public ActivityDetailDto getClubActivityDetail(Long clubId, Long activityId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+
+        // 활동이 해당 동아리에 속하는지 확인
+        if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
+            throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        return ActivityDetailDto.from(activity);
+    }
+
+    // 동아리 활동 생성 (회장, 부대표, 관리자만 가능)
+    @Transactional
+    public ActivityDetailDto createActivity(Long clubId, Long userId, CreateActivityRequest request) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 회장, 부대표, 관리자 권한 확인
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+        if (member.getRole() != ClubMember.MemberRole.PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.VICE_PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.ADMIN) {
+            throw new IllegalArgumentException("회장이나 관리자만 활동을 생성할 수 있습니다.");
+        }
+
+        // 태그 검증 및 처리
+        List<String> tags = new ArrayList<>();
+        if (request.getTags() != null) {
+            for (String tag : request.getTags()) {
+                if (tag != null && !tag.trim().isEmpty()) {
+                    tags.add(tag.trim());
+                }
+            }
+        }
+
+        // 활동 생성
+        Activity activity = Activity.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .content(request.getContent())
+                .type(Activity.ActivityType.IN_SCHOOL) // 동아리 활동은 교내 활동
+                .club(club)
+                .createdBy(user)
+                .tags(tags.isEmpty() ? new ArrayList<>() : tags)
+                .build();
+
+        Activity savedActivity = activityRepository.save(activity);
+        return ActivityDetailDto.from(savedActivity);
+    }
+
     // 동아리 활동 사진 업로드 (회장 또는 관리자만 가능)
     @Transactional
     public ActivityImageResponse uploadActivityImage(Long clubId, Long activityId, Long userId, MultipartFile file) {

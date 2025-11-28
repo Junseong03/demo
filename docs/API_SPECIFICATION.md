@@ -417,7 +417,7 @@
 - `404 Not Found`: 기존 회장을 찾을 수 없습니다
 
 **참고:**
-- 기존 회장은 자동으로 일반 멤버(MEMBER)로 변경됩니다.
+- 기존 회장은 자동으로 관리자(ADMIN)로 변경됩니다.
 - 새 회장이 이미 동아리 멤버인 경우 역할만 변경되고, 멤버가 아닌 경우 자동으로 멤버로 추가됩니다.
 
 ---
@@ -542,7 +542,63 @@
 
 ---
 
-### 4.12 동아리 활동 조회
+### 4.12 동아리 활동 생성
+
+**POST** `/api/clubs/{clubId}/activities`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 활동을 생성하는 사용자 ID (권한 확인용)
+
+**Request Body:**
+```json
+{
+  "title": "string (required, max 200자)",
+  "description": "string (required, max 500자)",
+  "content": "string (optional, max 2000자)",
+  "tags": ["string"] (optional)
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "title": "2024 알고리즘 대회",
+  "description": "동아리 내부 알고리즘 대회",
+  "content": "상세 설명 내용",
+  "type": "IN_SCHOOL",
+  "category": null,
+  "organizer": null,
+  "deadline": null,
+  "startDate": null,
+  "link": null,
+  "imageUrl": null,
+  "images": [],
+  "tags": ["알고리즘", "대회"],
+  "createdAt": "2024-12-01T10:00:00",
+  "createdBy": {
+    "userId": 1,
+    "name": "김회장"
+  }
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 활동을 생성할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT), 부대표(VICE_PRESIDENT), 관리자(ADMIN)만 생성 가능
+- 생성 후 사진을 업로드할 수 있습니다
+
+---
+
+### 4.13 동아리 활동 조회
 
 **GET** `/api/clubs/{clubId}/activities`
 
@@ -581,7 +637,56 @@
 
 ---
 
-### 4.13 동아리 부원 목록 조회
+### 4.14 동아리 활동 상세 조회
+
+**GET** `/api/clubs/{clubId}/activities/{activityId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "title": "2024 알고리즘 대회",
+  "description": "동아리 내부 알고리즘 대회",
+  "content": "상세 설명 내용",
+  "type": "IN_SCHOOL",
+  "category": null,
+  "organizer": null,
+  "deadline": null,
+  "startDate": null,
+  "link": null,
+  "imageUrl": null,
+  "images": [
+    {
+      "id": 1,
+      "url": "http://localhost:9000/club-images/clubs/1/activities/1/image1.jpg",
+      "uploadedAt": "2024-12-01T10:00:00"
+    }
+  ],
+  "tags": ["알고리즘", "대회"],
+  "createdAt": "2024-12-01T10:00:00",
+  "createdBy": {
+    "userId": 1,
+    "name": "김회장"
+  }
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+
+**참고:**
+- `images`: 활동 사진 배열 (각 이미지의 ID 포함)
+- `createdBy`: 작성자 정보
+
+---
+
+### 4.15 동아리 부원 목록 조회
 
 **GET** `/api/clubs/{clubId}/members`
 
@@ -628,7 +733,7 @@
 
 ---
 
-### 4.14 동아리 가입 신청
+### 4.16 동아리 가입 신청
 
 **POST** `/api/clubs/{clubId}/applications`
 
@@ -674,7 +779,7 @@
 
 ---
 
-### 4.15 동아리 가입 신청 목록 조회 (회장용)
+### 4.17 동아리 가입 신청 목록 조회 (회장용)
 
 **GET** `/api/clubs/{clubId}/applications`
 
@@ -722,7 +827,7 @@
 
 ---
 
-### 4.16 동아리 가입 신청 승인 (회장용)
+### 4.18 동아리 가입 신청 승인 (회장용)
 
 **PUT** `/api/clubs/{clubId}/applications/{applicationId}/approve`
 
@@ -763,7 +868,7 @@
 
 ---
 
-### 4.17 동아리 가입 신청 거절 (회장용)
+### 4.19 동아리 가입 신청 거절 (회장용)
 
 **PUT** `/api/clubs/{clubId}/applications/{applicationId}/reject`
 
@@ -808,7 +913,7 @@
 
 ---
 
-### 4.18 현재 사용자의 동아리 멤버십 확인
+### 4.20 현재 사용자의 동아리 멤버십 확인
 
 **GET** `/api/clubs/{clubId}/membership`
 
@@ -837,7 +942,7 @@
 
 ---
 
-### 4.19 동아리 정보 수정
+### 4.21 동아리 정보 수정
 
 **PUT** `/api/clubs/{clubId}`
 
@@ -886,7 +991,7 @@
 
 ---
 
-### 4.20 동아리 부원 권한 변경
+### 4.23 동아리 부원 권한 변경
 
 **PUT** `/api/clubs/{clubId}/members/{memberUserId}/role`
 
@@ -928,6 +1033,33 @@
 - 회장(PRESIDENT)만 권한 변경 가능
 - 회장 자신의 권한은 변경 불가
 - `role` 값: `PRESIDENT` (회장), `VICE_PRESIDENT` (부대표), `ADMIN` (관리자), `MEMBER` (일반 부원)
+
+---
+
+### 4.22 동아리 부원 탈퇴 처리
+
+**DELETE** `/api/clubs/{clubId}/members/{memberUserId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `memberUserId`: 탈퇴시킬 부원의 사용자 ID
+
+**Query Parameters:**
+- `userId`: 탈퇴 처리하는 회장의 사용자 ID (권한 확인용)
+
+**Response:** `200 OK` (빈 응답)
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 부원을 탈퇴시킬 수 있습니다
+- `400 Bad Request`: 회장 자신은 탈퇴시킬 수 없습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 부원을 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT)만 부원 탈퇴 가능
+- 회장 자신은 탈퇴 불가 (회장 변경 후 탈퇴 가능)
+- 탈퇴된 부원은 동아리에서 제거됩니다
 
 ---
 

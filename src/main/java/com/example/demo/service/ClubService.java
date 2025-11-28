@@ -192,8 +192,8 @@ public class ClubService {
         ClubMember newPresidentMember = clubMemberRepository.findByUserIdAndClubId(newAdminUserId, clubId)
                 .orElse(null);
 
-        // 기존 회장을 일반 멤버로 변경
-        existingPresident.updateRole(ClubMember.MemberRole.MEMBER);
+        // 기존 회장을 관리자(ADMIN)로 변경
+        existingPresident.updateRole(ClubMember.MemberRole.ADMIN);
         clubMemberRepository.save(existingPresident);
 
         // 새 회장 설정
@@ -575,6 +575,33 @@ public class ClubService {
         ClubMember savedMember = clubMemberRepository.save(member);
 
         return ClubMemberDto.from(savedMember);
+    }
+
+    // 동아리 부원 탈퇴 처리 (회장만 가능)
+    @Transactional
+    public void removeMember(Long clubId, Long memberUserId, Long userId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        // 회장 권한 확인
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
+
+        if (!president.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("회장만 부원을 탈퇴시킬 수 있습니다.");
+        }
+
+        // 탈퇴시킬 부원 찾기
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(memberUserId, clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("부원을 찾을 수 없습니다."));
+
+        // 회장 자신은 탈퇴 불가
+        if (member.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("회장 자신은 탈퇴시킬 수 없습니다.");
+        }
+
+        // 부원 삭제
+        clubMemberRepository.delete(member);
     }
 }
 

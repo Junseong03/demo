@@ -273,5 +273,15 @@ public class ClubController {
         ClubMemberDto member = clubService.updateMemberRole(clubId, memberUserId, userId, request);
         return ResponseEntity.ok(member);
     }
+
+    // 동아리 부원 탈퇴 처리 (회장만 가능)
+    @DeleteMapping("/{clubId}/members/{memberUserId}")
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long clubId,
+            @PathVariable Long memberUserId,
+            @RequestParam Long userId) {
+        clubService.removeMember(clubId, memberUserId, userId);
+        return ResponseEntity.ok().build();
+    }
 }
 
