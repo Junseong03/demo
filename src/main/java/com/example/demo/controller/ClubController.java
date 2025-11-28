@@ -3,16 +3,16 @@ package com.example.demo.controller;
 import com.example.demo.dto.ClubDetailDto;
 import com.example.demo.dto.ClubDto;
 import com.example.demo.dto.ClubInquiryRequest;
+import com.example.demo.dto.CreateClubRequest;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.service.ClubService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/clubs")
@@ -38,6 +38,12 @@ public class ClubController {
     public ResponseEntity<ClubDetailDto> getClubDetail(@PathVariable Long clubId) {
         ClubDetailDto club = clubService.getClubDetail(clubId);
         return ResponseEntity.ok(club);
+    }
+
+    @PostMapping
+    public ResponseEntity<ClubDto> createClub(@Valid @RequestBody CreateClubRequest request) {
+        ClubDto createdClub = clubService.createClub(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdClub);
     }
 
     @PostMapping("/{clubId}/inquiries")

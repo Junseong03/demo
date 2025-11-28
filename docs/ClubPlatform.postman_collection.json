@@ -555,6 +555,227 @@
 						},
 						"description": "동아리 ID 1에 문의를 보냅니다."
 					}
+				},
+				{
+					"name": "3-10. 동아리 생성",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 성공\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql(\"새로운 동아리\");",
+									"    pm.environment.set(\"newClubId\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"새로운 동아리\",\n    \"type\": \"CENTRAL\",\n    \"department\": \"중앙동아리\",\n    \"description\": \"새로 만든 동아리입니다. 함께 성장해요!\",\n    \"fullDescription\": \"이 동아리는 개발과 프로그래밍에 관심이 있는 학생들을 위한 동아리입니다. 매주 정기 모임을 통해 함께 공부하고 프로젝트를 진행합니다.\",\n    \"imageUrl\": \"https://example.com/new-club.jpg\",\n    \"snsLink\": \"https://instagram.com/new_club\",\n    \"tags\": [\"개발\", \"프로그래밍\", \"스터디\"],\n    \"isRecruiting\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "새로운 동아리를 생성합니다. 필수 필드: name, type, department, description"
+					}
+				},
+				{
+					"name": "3-11. 동아리 생성 (최소 필드만)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 성공 (최소 필드)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql(\"간단한 동아리\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"간단한 동아리\",\n    \"type\": \"DEPARTMENT\",\n    \"department\": \"컴퓨터공학과\",\n    \"description\": \"과동아리입니다.\",\n    \"isRecruiting\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "필수 필드만으로 동아리를 생성합니다."
+					}
+				},
+				{
+					"name": "3-12. 동아리 생성 실패 (필수 필드 누락)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 실패 (필수 필드 누락)\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"\",\n    \"type\": \"CENTRAL\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "필수 필드가 누락되어 400 에러가 발생합니다."
+					}
+				},
+				{
+					"name": "3-13. 동아리 생성 실패 (이름 중복)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 실패 (이름 중복)\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"이미 존재하는 동아리 이름\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"알고리즘 동아리\",\n    \"type\": \"CENTRAL\",\n    \"department\": \"중앙동아리\",\n    \"description\": \"이미 존재하는 동아리 이름으로 생성 시도\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "이미 존재하는 동아리 이름으로 생성 시도 시 400 에러가 발생합니다."
+					}
+				},
+				{
+					"name": "3-14. 동아리 생성 실패 (특수기호 포함)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 실패 (특수기호 포함)\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"영어, 숫자, 한글만\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"동아리@123\",\n    \"type\": \"CENTRAL\",\n    \"department\": \"중앙동아리\",\n    \"description\": \"특수기호가 포함된 이름\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "특수기호가 포함된 이름으로 생성 시도 시 400 에러가 발생합니다."
+					}
+				},
+				{
+					"name": "3-15. 동아리 생성 실패 (태그에 특수기호 포함)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 실패 (태그에 특수기호 포함)\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"태그는 영어, 숫자, 한글만\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"새로운 동아리\",\n    \"type\": \"CENTRAL\",\n    \"department\": \"중앙동아리\",\n    \"description\": \"태그에 특수기호가 포함된 경우\",\n    \"tags\": [\"개발\", \"프로그래밍#\", \"AI\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "태그에 특수기호가 포함된 경우 400 에러가 발생합니다."
+					}
 				}
 			]
 		},

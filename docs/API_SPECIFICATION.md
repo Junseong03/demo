@@ -310,6 +310,61 @@
 
 ---
 
+### 4.4 동아리 생성
+
+**POST** `/api/clubs`
+
+**Request Body:**
+```json
+{
+  "name": "string (required)",
+  "type": "CENTRAL | DEPARTMENT (required)",
+  "department": "string (required)",
+  "description": "string (required, max 500자)",
+  "fullDescription": "string (optional, max 1000자)",
+  "imageUrl": "string (optional)",
+  "snsLink": "string (optional)",
+  "tags": ["string"] (optional),
+  "isRecruiting": "boolean (optional, default: false)"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 5,
+  "name": "새로운 동아리",
+  "type": "CENTRAL",
+  "department": "중앙동아리",
+  "description": "새로 만든 동아리입니다",
+  "imageUrl": "https://example.com/new-club.jpg",
+  "isRecruiting": true,
+  "tags": ["개발", "프로그래밍"]
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 유효성 검사 실패 (필수 필드 누락, 잘못된 type 값, 특수기호 포함 등)
+```json
+{
+  "message": "동아리 이름은 필수입니다.",
+  "status": "error"
+}
+```
+
+**유효성 검사 규칙:**
+- `name`, `department`, `description`, `fullDescription`: 영어, 숫자, 한글만 입력 가능 (공백 포함)
+- `tags`: 각 태그는 영어, 숫자, 한글만 입력 가능 (공백 제외)
+- `imageUrl`, `snsLink`: URL이므로 특수기호 허용
+- 동아리 이름은 중복될 수 없습니다 (이미 존재하는 이름이면 `400 Bad Request`)
+
+**참고:**
+- `tags`는 배열로 전달하거나, 프론트엔드에서 쉼표로 구분된 문자열을 배열로 변환하여 전달할 수 있습니다.
+- `type`은 `CENTRAL` (중앙동아리) 또는 `DEPARTMENT` (과동아리)만 가능합니다.
+- 동아리 이름 중복 시: `"이미 존재하는 동아리 이름입니다."` 에러 메시지 반환
+
+---
+
 ## 5. 활동 API
 
 ### 5.1 활동 목록

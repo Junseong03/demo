@@ -30,5 +30,7 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
     Page<Club> findByTypeAndTag(@Param("type") Club.ClubType type, @Param("tag") String tag, Pageable pageable);
     
     Page<Club> findAll(Pageable pageable);
+    
+    boolean existsByName(String name);
 }
 
