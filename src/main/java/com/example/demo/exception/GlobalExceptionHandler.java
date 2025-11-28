@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -36,6 +37,21 @@ public class GlobalExceptionHandler {
             error.put("message", fieldError.getDefaultMessage());
         } else {
             error.put("message", "유효성 검사에 실패했습니다.");
+        }
+        error.put("status", "error");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        Map<String, String> error = new HashMap<>();
+        String message = e.getMessage();
+        
+        // 동아리 이름 중복 체크
+        if (message != null && (message.contains("clubs") && message.contains("name"))) {
+            error.put("message", "이미 존재하는 동아리 이름입니다.");
+        } else {
+            error.put("message", "데이터 무결성 제약조건 위반입니다.");
         }
         error.put("status", "error");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);

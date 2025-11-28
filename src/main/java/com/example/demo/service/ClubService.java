@@ -13,6 +13,7 @@ import com.example.demo.repository.ClubInquiryRepository;
 import com.example.demo.repository.ClubRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -131,8 +132,14 @@ public class ClubService {
                 .tags(tags)
                 .build();
 
-        Club savedClub = clubRepository.save(club);
-        return ClubDto.from(savedClub);
+        try {
+            Club savedClub = clubRepository.save(club);
+            return ClubDto.from(savedClub);
+        } catch (DataIntegrityViolationException e) {
+            // 동시성 문제로 인한 중복 삽입 시도 시 데이터베이스 제약조건 위반
+            // 또는 existsByName 체크와 save 사이에 다른 트랜잭션이 끼어든 경우
+            throw new IllegalArgumentException("이미 존재하는 동아리 이름입니다.");
+        }
     }
 }
 
