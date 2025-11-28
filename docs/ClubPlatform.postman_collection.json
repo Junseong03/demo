@@ -1,16 +1,32 @@
 {
 	"info": {
 		"_postman_id": "club-platform-collection",
-		"name": "교내 동아리 플랫폼 API",
-		"description": "해커톤용 교내 동아리 플랫폼 백엔드 API 컬렉션",
+		"name": "교내 동아리 플랫폼 API - 시나리오 테스트",
+		"description": "해커톤용 교내 동아리 플랫폼 백엔드 API 컬렉션 - 시나리오 기반 테스트",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "인증",
+			"name": "시나리오 1: 인증 및 사용자 관리",
 			"item": [
 				{
-					"name": "회원가입",
+					"name": "1-1. 회원가입 (신규 사용자)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"회원가입 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"회원가입 성공\");",
+									"    pm.environment.set(\"newUserId\", jsonData.userId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -21,17 +37,71 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"newuser@university.ac.kr\",\n    \"password\": \"password123\",\n    \"name\": \"신규학생\",\n    \"major\": \"컴퓨터공학과\",\n    \"interestTags\": [\"개발\", \"프로그래밍\"]\n}"
+							"raw": "{\n    \"email\": \"newuser@university.ac.kr\",\n    \"password\": \"password123\",\n    \"name\": \"신규학생\",\n    \"major\": \"컴퓨터공학과\",\n    \"interestTags\": [\"개발\", \"프로그래밍\", \"AI\"]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/signup",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "auth", "signup"]
-						}
+						},
+						"description": "새로운 사용자를 등록합니다. 성공 시 userId가 반환됩니다."
 					}
 				},
 				{
-					"name": "로그인",
+					"name": "1-2. 회원가입 실패 (중복 이메일)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"중복 이메일 에러\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"이미 존재하는 이메일\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student1@university.ac.kr\",\n    \"password\": \"password123\",\n    \"name\": \"중복테스트\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "signup"]
+						},
+						"description": "이미 존재하는 이메일로 회원가입 시도 - 400 에러 예상"
+					}
+				},
+				{
+					"name": "1-3. 로그인 (기존 사용자)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"로그인 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"로그인 성공\");",
+									"    pm.environment.set(\"userId\", jsonData.userId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -48,16 +118,150 @@
 							"raw": "{{baseUrl}}/api/auth/login",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "auth", "login"]
+						},
+						"description": "더미 데이터의 사용자로 로그인합니다. userId=1이 반환됩니다."
+					}
+				},
+				{
+					"name": "1-4. 로그인 실패 (잘못된 비밀번호)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"로그인 실패\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"이메일 또는 비밀번호\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student1@university.ac.kr\",\n    \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "잘못된 비밀번호로 로그인 시도 - 400 에러 예상"
+					}
+				},
+				{
+					"name": "1-5. 내 정보 조회",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"내 정보 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.expect(jsonData).to.have.property(\"email\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/me?userId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "me"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						},
+						"description": "로그인한 사용자의 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "1-6. 내 정보 수정",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"내 정보 수정 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql(\"수정된이름\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"수정된이름\",\n    \"major\": \"컴퓨터공학과\",\n    \"interestTags\": [\"개발\", \"프로그래밍\", \"AI\", \"머신러닝\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/me?userId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "me"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						},
+						"description": "사용자 정보를 수정합니다. name, major, interestTags를 업데이트할 수 있습니다."
 					}
 				}
 			]
 		},
 		{
-			"name": "홈",
+			"name": "시나리오 2: 홈 추천",
 			"item": [
 				{
-					"name": "홈 추천 (전체)",
+					"name": "2-1. 홈 추천 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"홈 추천 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"recommendedClubs\");",
+									"    pm.expect(jsonData).to.have.property(\"recommendedInSchoolActivities\");",
+									"    pm.expect(jsonData).to.have.property(\"recommendedOutSchoolActivities\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -65,11 +269,27 @@
 							"raw": "{{baseUrl}}/api/home/recommendations",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "home", "recommendations"]
-						}
+						},
+						"description": "로그인하지 않은 사용자를 위한 기본 추천을 조회합니다."
 					}
 				},
 				{
-					"name": "홈 추천 (유저별)",
+					"name": "2-2. 홈 추천 (유저별)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"유저별 추천 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.recommendedClubs.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -83,16 +303,34 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "특정 사용자의 관심 태그와 전공을 기반으로 한 추천을 조회합니다."
 					}
 				}
 			]
 		},
 		{
-			"name": "동아리",
+			"name": "시나리오 3: 동아리",
 			"item": [
 				{
-					"name": "동아리 목록 (전체)",
+					"name": "3-1. 동아리 목록 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData).to.have.property(\"page\");",
+									"    pm.expect(jsonData).to.have.property(\"totalElements\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -100,11 +338,12 @@
 							"raw": "{{baseUrl}}/api/clubs",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "clubs"]
-						}
+						},
+						"description": "모든 동아리 목록을 조회합니다. 기본 size=100으로 사실상 전체 조회됩니다."
 					}
 				},
 				{
-					"name": "동아리 목록 (중앙만)",
+					"name": "3-2. 동아리 목록 (중앙만)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -118,11 +357,12 @@
 									"value": "CENTRAL"
 								}
 							]
-						}
+						},
+						"description": "중앙 동아리만 필터링하여 조회합니다."
 					}
 				},
 				{
-					"name": "동아리 목록 (학과만)",
+					"name": "3-3. 동아리 목록 (학과만)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -136,11 +376,12 @@
 									"value": "DEPARTMENT"
 								}
 							]
-						}
+						},
+						"description": "학과 동아리만 필터링하여 조회합니다."
 					}
 				},
 				{
-					"name": "동아리 목록 (태그 필터)",
+					"name": "3-4. 동아리 목록 (태그 필터)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -158,11 +399,27 @@
 									"value": "개발"
 								}
 							]
-						}
+						},
+						"description": "중앙 동아리 중 '개발' 태그가 있는 동아리만 조회합니다."
 					}
 				},
 				{
-					"name": "동아리 목록 (검색)",
+					"name": "3-5. 동아리 검색 (키워드)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 검색 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -176,11 +433,51 @@
 									"value": "알고리즘"
 								}
 							]
-						}
+						},
+						"description": "동아리명 또는 설명에서 '알고리즘' 키워드로 검색합니다."
 					}
 				},
 				{
-					"name": "동아리 상세",
+					"name": "3-6. 동아리 목록 (페이지네이션)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?page=0&size=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						},
+						"description": "페이지네이션을 적용하여 2개씩 조회합니다."
+					}
+				},
+				{
+					"name": "3-7. 동아리 상세",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 상세 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"fullDescription\");",
+									"    pm.expect(jsonData).to.have.property(\"snsLink\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -188,11 +485,51 @@
 							"raw": "{{baseUrl}}/api/clubs/1",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "clubs", "1"]
-						}
+						},
+						"description": "동아리 ID 1의 상세 정보를 조회합니다."
 					}
 				},
 				{
-					"name": "동아리 문의 보내기",
+					"name": "3-8. 동아리 상세 (존재하지 않는 ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"404 에러 확인\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs", "999"]
+						},
+						"description": "존재하지 않는 동아리 ID로 조회 시도 - 404 에러 예상"
+					}
+				},
+				{
+					"name": "3-9. 동아리 문의 보내기",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 문의 전송 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -215,16 +552,32 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "동아리 ID 1에 문의를 보냅니다."
 					}
 				}
 			]
 		},
 		{
-			"name": "활동",
+			"name": "시나리오 4: 교내/교외 활동",
 			"item": [
 				{
-					"name": "교내 활동 목록",
+					"name": "4-1. 교내 활동 목록 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"교내 활동 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content[0].type).to.eql(\"IN_SCHOOL\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -238,11 +591,27 @@
 									"value": "IN_SCHOOL"
 								}
 							]
-						}
+						},
+						"description": "교내 활동만 조회합니다."
 					}
 				},
 				{
-					"name": "교외 활동 목록",
+					"name": "4-2. 교외 활동 목록 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"교외 활동 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content[0].type).to.eql(\"OUT_SCHOOL\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -256,11 +625,12 @@
 									"value": "OUT_SCHOOL"
 								}
 							]
-						}
+						},
+						"description": "교외 활동만 조회합니다."
 					}
 				},
 				{
-					"name": "활동 목록 (카테고리 필터)",
+					"name": "4-3. 활동 목록 (카테고리 필터 - 공모전)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -278,11 +648,135 @@
 									"value": "CONTEST"
 								}
 							]
-						}
+						},
+						"description": "교내 활동 중 공모전만 필터링합니다."
 					}
 				},
 				{
-					"name": "활동 상세",
+					"name": "4-4. 활동 목록 (카테고리 필터 - 대회)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL&category=COMPETITION",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								},
+								{
+									"key": "category",
+									"value": "COMPETITION"
+								}
+							]
+						},
+						"description": "교내 활동 중 대회만 필터링합니다."
+					}
+				},
+				{
+					"name": "4-5. 활동 검색 (키워드 - 전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"활동 검색 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?keyword=프로그래밍",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "프로그래밍"
+								}
+							]
+						},
+						"description": "모든 활동에서 '프로그래밍' 키워드로 검색합니다."
+					}
+				},
+				{
+					"name": "4-6. 활동 검색 (타입 + 키워드)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL&keyword=해커톤",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								},
+								{
+									"key": "keyword",
+									"value": "해커톤"
+								}
+							]
+						},
+						"description": "교내 활동 중 '해커톤' 키워드로 검색합니다."
+					}
+				},
+				{
+					"name": "4-7. 활동 목록 (페이지네이션)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL&page=0&size=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						},
+						"description": "교내 활동을 페이지네이션으로 2개씩 조회합니다."
+					}
+				},
+				{
+					"name": "4-8. 활동 상세 (교내)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"활동 상세 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData.type).to.eql(\"IN_SCHOOL\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -290,16 +784,75 @@
 							"raw": "{{baseUrl}}/api/activities/1",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "activities", "1"]
+						},
+						"description": "활동 ID 1의 상세 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "4-9. 활동 상세 (교외)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities/4",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities", "4"]
+						},
+						"description": "교외 활동 ID 4의 상세 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "4-10. 활동 상세 (존재하지 않는 ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"404 에러 확인\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities", "999"]
+						},
+						"description": "존재하지 않는 활동 ID로 조회 시도 - 404 에러 예상"
 					}
 				}
 			]
 		},
 		{
-			"name": "캘린더",
+			"name": "시나리오 5: 캘린더",
 			"item": [
 				{
-					"name": "캘린더 이벤트 조회",
+					"name": "5-1. 캘린더 이벤트 조회 (전체 기간)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"캘린더 이벤트 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property(\"targetType\");",
+									"        pm.expect(jsonData[0]).to.have.property(\"targetId\");",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -317,16 +870,56 @@
 									"value": "2024-12-31"
 								}
 							]
-						}
+						},
+						"description": "2024년 전체 기간의 캘린더 이벤트를 조회합니다."
+					}
+				},
+				{
+					"name": "5-2. 캘린더 이벤트 조회 (특정 월)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/calendar?from=2024-12-01&to=2024-12-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "calendar"],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-12-01"
+								},
+								{
+									"key": "to",
+									"value": "2024-12-31"
+								}
+							]
+						},
+						"description": "2024년 12월의 캘린더 이벤트를 조회합니다."
 					}
 				}
 			]
 		},
 		{
-			"name": "취업 정보",
+			"name": "시나리오 6: 취업 정보",
 			"item": [
 				{
-					"name": "취업 정보 목록",
+					"name": "6-1. 취업 정보 목록 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"취업 정보 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData.content.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -334,11 +927,51 @@
 							"raw": "{{baseUrl}}/api/jobs",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "jobs"]
-						}
+						},
+						"description": "모든 취업 정보 목록을 조회합니다."
 					}
 				},
 				{
-					"name": "취업 정보 상세",
+					"name": "6-2. 취업 정보 목록 (페이지네이션)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/jobs?page=0&size=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "jobs"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						},
+						"description": "취업 정보를 페이지네이션으로 2개씩 조회합니다."
+					}
+				},
+				{
+					"name": "6-3. 취업 정보 상세",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"취업 정보 상세 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData).to.have.property(\"companyName\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -346,16 +979,58 @@
 							"raw": "{{baseUrl}}/api/jobs/1",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "jobs", "1"]
+						},
+						"description": "취업 정보 ID 1의 상세 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "6-4. 취업 정보 상세 (존재하지 않는 ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"404 에러 확인\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/jobs/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "jobs", "999"]
+						},
+						"description": "존재하지 않는 취업 정보 ID로 조회 시도 - 404 에러 예상"
 					}
 				}
 			]
 		},
 		{
-			"name": "공지방",
+			"name": "시나리오 7: 공지방",
 			"item": [
 				{
-					"name": "내가 속한 동아리 공지",
+					"name": "7-1. 내가 속한 동아리 공지 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"내 공지 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -369,11 +1044,54 @@
 									"value": "1"
 								}
 							]
-						}
+						},
+						"description": "userId=1이 속한 모든 동아리의 공지를 조회합니다. (페이지네이션)"
 					}
 				},
 				{
-					"name": "특정 동아리 공지 목록",
+					"name": "7-2. 내가 속한 동아리 공지 (페이지네이션)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/me/notices?userId=1&page=0&size=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "me", "notices"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						},
+						"description": "내 공지를 페이지네이션으로 2개씩 조회합니다."
+					}
+				},
+				{
+					"name": "7-3. 특정 동아리 공지 목록",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 공지 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -381,11 +1099,41 @@
 							"raw": "{{baseUrl}}/api/clubs/1/notices",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "clubs", "1", "notices"]
-						}
+						},
+						"description": "동아리 ID 1의 공지 목록을 조회합니다. (배열로 반환)"
 					}
 				},
 				{
-					"name": "공지 상세",
+					"name": "7-4. 특정 동아리 공지 목록 (다른 동아리)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/2/notices",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs", "2", "notices"]
+						},
+						"description": "동아리 ID 2의 공지 목록을 조회합니다."
+					}
+				},
+				{
+					"name": "7-5. 공지 상세",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"공지 상세 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData).to.have.property(\"clubId\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -393,16 +1141,59 @@
 							"raw": "{{baseUrl}}/api/notices/1",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "notices", "1"]
+						},
+						"description": "공지 ID 1의 상세 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "7-6. 공지 상세 (존재하지 않는 ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"404 에러 확인\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notices/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notices", "999"]
+						},
+						"description": "존재하지 않는 공지 ID로 조회 시도 - 404 에러 예상"
 					}
 				}
 			]
 		},
 		{
-			"name": "인재 프로필",
+			"name": "시나리오 8: 인재 프로필",
 			"item": [
 				{
-					"name": "인재 프로필 목록",
+					"name": "8-1. 인재 프로필 목록 (전체)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"인재 프로필 목록 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"content\");",
+									"    pm.expect(jsonData.content.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -410,11 +1201,51 @@
 							"raw": "{{baseUrl}}/api/talents",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "talents"]
-						}
+						},
+						"description": "모든 인재 프로필 목록을 조회합니다."
 					}
 				},
 				{
-					"name": "인재 프로필 상세",
+					"name": "8-2. 인재 프로필 목록 (페이지네이션)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/talents?page=0&size=2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "talents"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						},
+						"description": "인재 프로필을 페이지네이션으로 2개씩 조회합니다."
+					}
+				},
+				{
+					"name": "8-3. 인재 프로필 상세",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"인재 프로필 상세 조회 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"skills\");",
+									"    pm.expect(jsonData).to.have.property(\"portfolioLink\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -422,7 +1253,163 @@
 							"raw": "{{baseUrl}}/api/talents/1",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "talents", "1"]
+						},
+						"description": "인재 프로필 ID 1의 상세 정보를 조회합니다."
+					}
+				},
+				{
+					"name": "8-4. 인재 프로필 상세 (존재하지 않는 ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"404 에러 확인\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/talents/999",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "talents", "999"]
+						},
+						"description": "존재하지 않는 인재 프로필 ID로 조회 시도 - 404 에러 예상"
+					}
+				}
+			]
+		},
+		{
+			"name": "시나리오 9: 통합 테스트",
+			"item": [
+				{
+					"name": "9-1. 전체 플로우 테스트 (로그인 → 홈 → 동아리 → 활동)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// 1단계: 로그인",
+									"pm.sendRequest({",
+									"    url: pm.environment.get('baseUrl') + '/api/auth/login',",
+									"    method: 'POST',",
+									"    header: { 'Content-Type': 'application/json' },",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({",
+									"            email: 'student1@university.ac.kr',",
+									"            password: 'password123'",
+									"        })",
+									"    }",
+									"}, function (err, res) {",
+									"    if (!err) {",
+									"        var loginData = res.json();",
+									"        pm.environment.set('userId', loginData.userId);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"통합 플로우 성공\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/home/recommendations?userId={{userId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "home", "recommendations"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								}
+							]
+						},
+						"description": "전체 플로우를 테스트합니다: 로그인 → 홈 추천 조회"
+					}
+				},
+				{
+					"name": "9-2. 필터 조합 테스트 (동아리)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?type=CENTRAL&tag=개발&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "type",
+									"value": "CENTRAL"
+								},
+								{
+									"key": "tag",
+									"value": "개발"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "여러 필터를 조합하여 테스트합니다: type + tag + 페이지네이션"
+					}
+				},
+				{
+					"name": "9-3. 필터 조합 테스트 (활동)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL&category=CONTEST&keyword=공모전&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								},
+								{
+									"key": "category",
+									"value": "CONTEST"
+								},
+								{
+									"key": "keyword",
+									"value": "공모전"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "활동 API의 모든 필터를 조합하여 테스트합니다: type + category + keyword + 페이지네이션"
 					}
 				}
 			]
@@ -433,7 +1420,11 @@
 			"key": "baseUrl",
 			"value": "http://localhost:8080",
 			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string"
 		}
 	]
 }
-

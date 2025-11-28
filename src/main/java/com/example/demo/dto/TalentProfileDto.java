@@ -23,15 +23,23 @@ public class TalentProfileDto {
     private List<String> availableProjectTypes;
 
     public static TalentProfileDto from(TalentProfile profile) {
+        // LazyInitializationException 방지를 위해 리스트를 복사
+        List<String> skills = profile.getSkills() != null 
+                ? new java.util.ArrayList<>(profile.getSkills()) 
+                : new java.util.ArrayList<>();
+        List<String> projectTypes = profile.getAvailableProjectTypes() != null 
+                ? new java.util.ArrayList<>(profile.getAvailableProjectTypes()) 
+                : new java.util.ArrayList<>();
+        
         return TalentProfileDto.builder()
                 .id(profile.getId())
                 .userName(profile.getUser().getName())
                 .major(profile.getUser().getMajor())
                 .introduction(profile.getIntroduction())
-                .skills(profile.getSkills())
+                .skills(skills)
                 .currentAffiliation(profile.getCurrentAffiliation())
                 .portfolioLink(profile.getPortfolioLink())
-                .availableProjectTypes(profile.getAvailableProjectTypes())
+                .availableProjectTypes(projectTypes)
                 .build();
     }
 }

@@ -24,6 +24,11 @@ public class JobPostDto {
     private List<String> tags;
 
     public static JobPostDto from(JobPost jobPost) {
+        // LazyInitializationException 방지를 위해 리스트를 복사
+        List<String> tags = jobPost.getTags() != null 
+                ? new java.util.ArrayList<>(jobPost.getTags()) 
+                : new java.util.ArrayList<>();
+        
         return JobPostDto.builder()
                 .id(jobPost.getId())
                 .companyName(jobPost.getCompanyName())
@@ -32,7 +37,7 @@ public class JobPostDto {
                 .location(jobPost.getLocation())
                 .deadline(jobPost.getDeadline())
                 .link(jobPost.getLink())
-                .tags(jobPost.getTags())
+                .tags(tags)
                 .build();
     }
 }

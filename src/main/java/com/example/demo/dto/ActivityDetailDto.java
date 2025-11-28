@@ -28,6 +28,11 @@ public class ActivityDetailDto {
     private List<String> tags;
 
     public static ActivityDetailDto from(Activity activity) {
+        // LazyInitializationException 방지를 위해 리스트를 복사
+        List<String> tags = activity.getTags() != null 
+                ? new java.util.ArrayList<>(activity.getTags()) 
+                : new java.util.ArrayList<>();
+        
         return ActivityDetailDto.builder()
                 .id(activity.getId())
                 .title(activity.getTitle())
@@ -40,7 +45,7 @@ public class ActivityDetailDto {
                 .startDate(activity.getStartDate())
                 .link(activity.getLink())
                 .imageUrl(activity.getImageUrl())
-                .tags(activity.getTags())
+                .tags(tags)
                 .build();
     }
 }

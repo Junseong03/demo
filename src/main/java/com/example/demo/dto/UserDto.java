@@ -20,12 +20,17 @@ public class UserDto {
     private List<String> interestTags;
 
     public static UserDto from(User user) {
+        // LazyInitializationException 방지를 위해 리스트를 복사
+        List<String> tags = user.getInterestTags() != null 
+                ? new java.util.ArrayList<>(user.getInterestTags()) 
+                : new java.util.ArrayList<>();
+        
         return UserDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .major(user.getMajor())
-                .interestTags(user.getInterestTags())
+                .interestTags(tags)
                 .build();
     }
 }

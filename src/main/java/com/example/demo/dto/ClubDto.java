@@ -23,6 +23,11 @@ public class ClubDto {
     private List<String> tags;
 
     public static ClubDto from(Club club) {
+        // LazyInitializationException 방지를 위해 리스트를 복사
+        List<String> tags = club.getTags() != null 
+                ? new java.util.ArrayList<>(club.getTags()) 
+                : new java.util.ArrayList<>();
+        
         return ClubDto.builder()
                 .id(club.getId())
                 .name(club.getName())
@@ -31,7 +36,7 @@ public class ClubDto {
                 .description(club.getDescription())
                 .imageUrl(club.getImageUrl())
                 .isRecruiting(club.getIsRecruiting())
-                .tags(club.getTags())
+                .tags(tags)
                 .build();
     }
 }
