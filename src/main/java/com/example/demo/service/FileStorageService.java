@@ -7,6 +7,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.GetObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,9 @@ public class FileStorageService {
                 minioClient.makeBucket(MakeBucketArgs.builder()
                         .bucket(minIOConfig.getBucketName())
                         .build());
+                
+                // 버킷 정책을 public-read로 설정 (해커톤용 - 외부에서 이미지 접근 가능)
+                setBucketPublicReadPolicy();
             }
 
             // 파일명 생성 (UUID + 원본 파일명)
@@ -101,6 +105,37 @@ public class FileStorageService {
             return parts[parts.length - 2] + "/" + parts[parts.length - 1];
         }
         return parts[parts.length - 1];
+    }
+    
+    private void setBucketPublicReadPolicy() {
+        try {
+            // Public read 정책 JSON (S3 호환)
+            String policy = """
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "AWS": ["*"]
+                      },
+                      "Action": ["s3:GetObject"],
+                      "Resource": ["arn:aws:s3:::%s/*"]
+                    }
+                  ]
+                }
+                """.formatted(minIOConfig.getBucketName());
+            
+            minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                    .bucket(minIOConfig.getBucketName())
+                    .config(policy)
+                    .build());
+            
+            log.info("MinIO 버킷 정책을 public-read로 설정했습니다: {}", minIOConfig.getBucketName());
+        } catch (Exception e) {
+            log.warn("MinIO 버킷 정책 설정 실패 (이미지 직접 접근 불가): {}", e.getMessage());
+            log.warn("백엔드 API를 통해 이미지를 다운로드하세요: GET /api/clubs/{clubId}/image/download");
+        }
     }
 }
 
