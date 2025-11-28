@@ -967,6 +967,7 @@
 - 회장(PRESIDENT) 또는 관리자(ADMIN)만 업로드 가능
 - MinIO를 사용하여 파일을 저장합니다.
 - 업로드된 파일은 `club-images/clubs/{clubId}/activities/{activityId}/` 폴더에 저장됩니다.
+- 업로드된 이미지는 활동 상세 조회 응답의 `images` 배열에 포함됩니다.
 
 ---
 
@@ -1039,9 +1040,148 @@
   "startDate": "2024-12-31",
   "link": "https://example.com/contest1",
   "imageUrl": "https://example.com/activity1.jpg",
-  "tags": ["개발", "프로그래밍", "대회"]
+  "images": [
+    {
+      "id": 1,
+      "url": "http://localhost:9000/club-images/clubs/1/activities/1/image1.jpg",
+      "uploadedAt": "2024-12-01T10:00:00"
+    }
+  ],
+  "tags": ["개발", "프로그래밍", "대회"],
+  "createdAt": "2024-12-01T10:00:00",
+  "createdBy": {
+    "userId": 1,
+    "name": "김회장"
+  }
 }
 ```
+
+**참고:**
+- `images`: 활동 사진 배열 (각 이미지의 ID 포함)
+- `createdBy`: 작성자 정보
+- `imageUrl`: 레거시 호환용 (대표 이미지)
+
+---
+
+### 5.3 동아리 활동 수정
+
+**PUT** `/api/clubs/{clubId}/activities/{activityId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+
+**Query Parameters:**
+- `userId`: 수정하는 사용자 ID (권한 확인용)
+
+**Request Body:**
+```json
+{
+  "title": "string (optional, max 200자)",
+  "description": "string (optional, max 500자)",
+  "content": "string (optional, max 2000자)",
+  "tags": ["string"] (optional)
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "title": "수정된 제목",
+  "description": "수정된 설명",
+  "content": "수정된 상세 내용",
+  "type": "IN_SCHOOL",
+  "category": "COMPETITION",
+  "organizer": "컴퓨터공학과",
+  "deadline": "2024-12-31",
+  "startDate": "2024-12-31",
+  "link": "https://example.com/contest1",
+  "imageUrl": "https://example.com/activity1.jpg",
+  "images": [
+    {
+      "id": 1,
+      "url": "http://localhost:9000/club-images/clubs/1/activities/1/image1.jpg",
+      "uploadedAt": "2024-12-01T10:00:00"
+    }
+  ],
+  "tags": ["알고리즘", "대회"],
+  "createdAt": "2024-12-01T10:00:00",
+  "createdBy": {
+    "userId": 1,
+    "name": "김회장"
+  }
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 작성자나 관리자만 활동을 수정할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 작성자(createdBy.userId) 또는 회장(PRESIDENT), 부대표(VICE_PRESIDENT), 관리자(ADMIN)만 수정 가능
+- 사진은 별도 API로 추가/삭제
+
+---
+
+### 5.4 동아리 활동 삭제
+
+**DELETE** `/api/clubs/{clubId}/activities/{activityId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+
+**Query Parameters:**
+- `userId`: 삭제하는 사용자 ID (권한 확인용)
+
+**Response:** `200 OK` (빈 응답)
+
+**에러 응답:**
+- `400 Bad Request`: 작성자나 관리자만 활동을 삭제할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 작성자(createdBy.userId) 또는 회장(PRESIDENT), 부대표(VICE_PRESIDENT), 관리자(ADMIN)만 삭제 가능
+- 활동 삭제 시 관련된 모든 사진도 함께 삭제됩니다 (MinIO 및 DB)
+
+---
+
+### 5.5 동아리 활동 사진 삭제
+
+**DELETE** `/api/clubs/{clubId}/activities/{activityId}/images/{imageId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+- `imageId`: 이미지 ID (활동 상세 조회 응답의 `images` 배열에서 확인)
+
+**Query Parameters:**
+- `userId`: 삭제하는 사용자 ID (권한 확인용)
+
+**Response:** `200 OK` (빈 응답)
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 활동 사진을 삭제할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 활동 사진을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT) 또는 관리자(ADMIN)만 삭제 가능
+- `imageId`는 활동 상세 조회 응답의 `images` 배열에서 확인할 수 있습니다
+- MinIO에서 파일을 삭제하고, 데이터베이스의 이미지 레코드도 삭제합니다
 
 ---
 

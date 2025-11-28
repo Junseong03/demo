@@ -4,6 +4,7 @@ import com.example.demo.dto.ActivityDetailDto;
 import com.example.demo.dto.ActivityDto;
 import com.example.demo.dto.ActivityImageResponse;
 import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.UpdateActivityRequest;
 import com.example.demo.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -49,6 +51,38 @@ public class ActivityController {
             @RequestParam("file") MultipartFile file) {
         ActivityImageResponse response = activityService.uploadActivityImage(clubId, activityId, userId, file);
         return ResponseEntity.ok(response);
+    }
+
+    // 동아리 활동 수정 (작성자 또는 관리자만 가능)
+    @PutMapping("/clubs/{clubId}/activities/{activityId}")
+    public ResponseEntity<ActivityDetailDto> updateActivity(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId,
+            @RequestParam Long userId,
+            @Valid @RequestBody UpdateActivityRequest request) {
+        ActivityDetailDto updatedActivity = activityService.updateActivity(clubId, activityId, userId, request);
+        return ResponseEntity.ok(updatedActivity);
+    }
+
+    // 동아리 활동 삭제 (작성자 또는 관리자만 가능)
+    @DeleteMapping("/clubs/{clubId}/activities/{activityId}")
+    public ResponseEntity<Void> deleteActivity(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId,
+            @RequestParam Long userId) {
+        activityService.deleteActivity(clubId, activityId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 동아리 활동 사진 삭제 (imageId 기반, 회장 또는 관리자만 가능)
+    @DeleteMapping("/clubs/{clubId}/activities/{activityId}/images/{imageId}")
+    public ResponseEntity<Void> deleteActivityImage(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId,
+            @PathVariable Long imageId,
+            @RequestParam Long userId) {
+        activityService.deleteActivityImage(clubId, activityId, imageId, userId);
+        return ResponseEntity.ok().build();
     }
 }
 

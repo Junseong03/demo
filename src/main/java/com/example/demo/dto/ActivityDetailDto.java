@@ -7,7 +7,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @NoArgsConstructor
@@ -24,14 +27,43 @@ public class ActivityDetailDto {
     private LocalDate deadline;
     private LocalDate startDate;
     private String link;
-    private String imageUrl;
+    private String imageUrl; // 레거시 호환용
+    private List<ActivityImageDto> images; // 활동 사진들
     private List<String> tags;
+    private LocalDateTime createdAt;
+    private CreatedByDto createdBy;
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CreatedByDto {
+        private Long userId;
+        private String name;
+    }
 
     public static ActivityDetailDto from(Activity activity) {
         // LazyInitializationException 방지를 위해 리스트를 복사
         List<String> tags = activity.getTags() != null 
-                ? new java.util.ArrayList<>(activity.getTags()) 
-                : new java.util.ArrayList<>();
+                ? new ArrayList<>(activity.getTags()) 
+                : new ArrayList<>();
+        
+        // ActivityImage 리스트를 DTO로 변환
+        List<ActivityImageDto> images = new ArrayList<>();
+        if (activity.getImages() != null) {
+            images = activity.getImages().stream()
+                    .map(ActivityImageDto::from)
+                    .collect(Collectors.toList());
+        }
+        
+        // 작성자 정보
+        CreatedByDto createdBy = null;
+        if (activity.getCreatedBy() != null) {
+            createdBy = CreatedByDto.builder()
+                    .userId(activity.getCreatedBy().getId())
+                    .name(activity.getCreatedBy().getName())
+                    .build();
+        }
         
         return ActivityDetailDto.builder()
                 .id(activity.getId())
@@ -45,7 +77,10 @@ public class ActivityDetailDto {
                 .startDate(activity.getStartDate())
                 .link(activity.getLink())
                 .imageUrl(activity.getImageUrl())
+                .images(images)
                 .tags(tags)
+                .createdAt(activity.getCreatedAt())
+                .createdBy(createdBy)
                 .build();
     }
 }

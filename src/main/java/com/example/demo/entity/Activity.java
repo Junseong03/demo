@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,11 +50,37 @@ public class Activity {
 
     private String link; // 관련 링크
 
-    private String imageUrl; // 대표 이미지
+    private String imageUrl; // 대표 이미지 (레거시 호환용)
+    
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ActivityImage> images = new ArrayList<>(); // 활동 사진들
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private User createdBy; // 작성자
+    
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
     
     public void updateImageUrl(String imageUrl) {
         if (imageUrl != null) {
             this.imageUrl = imageUrl;
+        }
+    }
+    
+    public void updateInfo(String title, String description, String content, List<String> tags) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (content != null) {
+            this.content = content;
+        }
+        if (tags != null) {
+            this.tags = new ArrayList<>(tags);
         }
     }
 

@@ -2,10 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.dto.*;
 import com.example.demo.entity.Activity;
+import com.example.demo.entity.ActivityImage;
 import com.example.demo.entity.Club;
 import com.example.demo.entity.ClubMember;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repository.ActivityImageRepository;
 import com.example.demo.repository.ActivityRepository;
 import com.example.demo.repository.ClubMemberRepository;
 import com.example.demo.repository.ClubRepository;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ActivityService {
     private final ActivityRepository activityRepository;
+    private final ActivityImageRepository activityImageRepository;
     private final ClubRepository clubRepository;
     private final ClubMemberRepository clubMemberRepository;
     private final UserRepository userRepository;
@@ -137,14 +141,166 @@ public class ActivityService {
         String folder = "clubs/" + clubId + "/activities/" + activityId;
         String uploadedUrl = fileStorageService.uploadFile(file, folder);
 
-        // 활동 이미지 URL 업데이트
-        activity.updateImageUrl(uploadedUrl);
-        Activity savedActivity = activityRepository.save(activity);
+        // ActivityImage 엔티티 생성 및 저장
+        ActivityImage activityImage = ActivityImage.builder()
+                .activity(activity)
+                .imageUrl(uploadedUrl)
+                .build();
+        activityImageRepository.save(activityImage);
 
         return ActivityImageResponse.builder()
-                .activityId(savedActivity.getId())
-                .imageUrl(savedActivity.getImageUrl())
+                .activityId(activity.getId())
+                .imageUrl(uploadedUrl)
                 .build();
+    }
+
+    // 동아리 활동 수정 (작성자 또는 관리자만 가능)
+    @Transactional
+    public ActivityDetailDto updateActivity(Long clubId, Long activityId, Long userId, UpdateActivityRequest request) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 활동이 해당 동아리에 속하는지 확인
+        if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
+            throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        // 작성자 또는 관리자 권한 확인
+        boolean isAuthor = activity.getCreatedBy() != null && activity.getCreatedBy().getId().equals(userId);
+        boolean isAdmin = false;
+
+        if (!isAuthor) {
+            ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                    .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+            if (member.getRole() == ClubMember.MemberRole.PRESIDENT ||
+                member.getRole() == ClubMember.MemberRole.VICE_PRESIDENT ||
+                member.getRole() == ClubMember.MemberRole.ADMIN) {
+                isAdmin = true;
+            }
+        }
+
+        if (!isAuthor && !isAdmin) {
+            throw new IllegalArgumentException("작성자나 관리자만 활동을 수정할 수 있습니다.");
+        }
+
+        // 태그 검증 및 처리
+        List<String> tags = new ArrayList<>();
+        if (request.getTags() != null) {
+            for (String tag : request.getTags()) {
+                if (tag != null && !tag.trim().isEmpty()) {
+                    tags.add(tag.trim());
+                }
+            }
+        }
+
+        // 활동 정보 업데이트
+        activity.updateInfo(
+                request.getTitle(),
+                request.getDescription(),
+                request.getContent(),
+                tags.isEmpty() ? null : tags
+        );
+
+        Activity savedActivity = activityRepository.save(activity);
+        return ActivityDetailDto.from(savedActivity);
+    }
+
+    // 동아리 활동 삭제 (작성자 또는 관리자만 가능)
+    @Transactional
+    public void deleteActivity(Long clubId, Long activityId, Long userId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 활동이 해당 동아리에 속하는지 확인
+        if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
+            throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        // 작성자 또는 관리자 권한 확인
+        boolean isAuthor = activity.getCreatedBy() != null && activity.getCreatedBy().getId().equals(userId);
+        boolean isAdmin = false;
+
+        if (!isAuthor) {
+            ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                    .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+            if (member.getRole() == ClubMember.MemberRole.PRESIDENT ||
+                member.getRole() == ClubMember.MemberRole.VICE_PRESIDENT ||
+                member.getRole() == ClubMember.MemberRole.ADMIN) {
+                isAdmin = true;
+            }
+        }
+
+        if (!isAuthor && !isAdmin) {
+            throw new IllegalArgumentException("작성자나 관리자만 활동을 삭제할 수 있습니다.");
+        }
+
+        // 활동의 모든 이미지 삭제 (MinIO에서)
+        List<ActivityImage> images = activityImageRepository.findByActivityId(activityId);
+        for (ActivityImage image : images) {
+            String fileName = fileStorageService.extractFileNameFromUrl(image.getImageUrl());
+            if (fileName != null) {
+                try {
+                    fileStorageService.deleteFile(fileName);
+                } catch (Exception e) {
+                    // MinIO 삭제 실패해도 계속 진행
+                }
+            }
+        }
+
+        // 활동 삭제 (이미지도 cascade로 함께 삭제됨)
+        activityRepository.delete(activity);
+    }
+
+    // 동아리 활동 사진 삭제 (imageId 기반)
+    @Transactional
+    public void deleteActivityImage(Long clubId, Long activityId, Long imageId, Long userId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 활동이 해당 동아리에 속하는지 확인
+        if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
+            throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        // 회장 또는 관리자 권한 확인
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+        if (member.getRole() != ClubMember.MemberRole.PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.ADMIN) {
+            throw new IllegalArgumentException("회장이나 관리자만 활동 사진을 삭제할 수 있습니다.");
+        }
+
+        // 이미지 찾기
+        ActivityImage activityImage = activityImageRepository.findByIdAndActivityId(imageId, activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동 사진을 찾을 수 없습니다."));
+
+        // MinIO에서 파일 삭제
+        String fileName = fileStorageService.extractFileNameFromUrl(activityImage.getImageUrl());
+        if (fileName != null) {
+            try {
+                fileStorageService.deleteFile(fileName);
+            } catch (Exception e) {
+                // MinIO 삭제 실패해도 DB에서 삭제는 진행
+            }
+        }
+
+        // DB에서 이미지 삭제
+        activityImageRepository.delete(activityImage);
     }
 }
 
