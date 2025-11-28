@@ -38,5 +38,12 @@ public class ClubMember {
         MEMBER, // 일반 멤버
         ADMIN // 운영진
     }
+
+    // 해커톤용 간단한 업데이트 메서드
+    public void updateRole(MemberRole role) {
+        if (role != null) {
+            this.role = role;
+        }
+    }
 }
 

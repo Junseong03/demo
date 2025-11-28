@@ -1,15 +1,13 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.ClubDetailDto;
-import com.example.demo.dto.ClubDto;
-import com.example.demo.dto.ClubInquiryRequest;
-import com.example.demo.dto.CreateClubRequest;
-import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.*;
 import com.example.demo.entity.Club;
 import com.example.demo.entity.ClubInquiry;
+import com.example.demo.entity.ClubMember;
 import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.ClubInquiryRepository;
+import com.example.demo.repository.ClubMemberRepository;
 import com.example.demo.repository.ClubRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ import java.util.stream.Collectors;
 public class ClubService {
     private final ClubRepository clubRepository;
     private final ClubInquiryRepository clubInquiryRepository;
+    private final ClubMemberRepository clubMemberRepository;
     private final UserRepository userRepository;
 
     public List<ClubDto> getClubs(String type, String tag, String keyword) {
@@ -107,6 +106,10 @@ public class ClubService {
             throw new IllegalArgumentException("이미 존재하는 동아리 이름입니다.");
         }
 
+        // 사용자 존재 확인
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
         // 태그 리스트 처리 및 검증 (null이면 빈 리스트로)
         List<String> tags = new ArrayList<>();
         if (request.getTags() != null) {
@@ -134,12 +137,95 @@ public class ClubService {
 
         try {
             Club savedClub = clubRepository.save(club);
+
+            // 동아리 생성자를 회장(ADMIN)으로 자동 설정
+            ClubMember adminMember = ClubMember.builder()
+                    .user(user)
+                    .club(savedClub)
+                    .role(ClubMember.MemberRole.ADMIN)
+                    .build();
+            clubMemberRepository.save(adminMember);
+
             return ClubDto.from(savedClub);
         } catch (DataIntegrityViolationException e) {
             // 동시성 문제로 인한 중복 삽입 시도 시 데이터베이스 제약조건 위반
             // 또는 existsByName 체크와 save 사이에 다른 트랜잭션이 끼어든 경우
             throw new IllegalArgumentException("이미 존재하는 동아리 이름입니다.");
         }
+    }
+
+    public ClubAdminDto getClubAdmin(Long clubId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        ClubMember admin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
+
+        return ClubAdminDto.from(admin);
+    }
+
+    @Transactional
+    public ClubAdminDto updateClubAdmin(Long clubId, Long newAdminUserId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        User newAdmin = userRepository.findById(newAdminUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 기존 회장 찾기
+        ClubMember existingAdmin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+                .orElseThrow(() -> new ResourceNotFoundException("기존 회장을 찾을 수 없습니다."));
+
+        // 새 회장이 이미 동아리 멤버인지 확인
+        ClubMember newAdminMember = clubMemberRepository.findByUserIdAndClubId(newAdminUserId, clubId)
+                .orElse(null);
+
+        // 기존 회장을 일반 멤버로 변경
+        existingAdmin.updateRole(ClubMember.MemberRole.MEMBER);
+        clubMemberRepository.save(existingAdmin);
+
+        // 새 회장 설정
+        if (newAdminMember != null) {
+            // 이미 멤버인 경우 역할만 변경
+            newAdminMember.updateRole(ClubMember.MemberRole.ADMIN);
+            clubMemberRepository.save(newAdminMember);
+        } else {
+            // 새로 멤버 추가
+            newAdminMember = ClubMember.builder()
+                    .user(newAdmin)
+                    .club(club)
+                    .role(ClubMember.MemberRole.ADMIN)
+                    .build();
+            clubMemberRepository.save(newAdminMember);
+        }
+
+        return ClubAdminDto.from(newAdminMember);
+    }
+
+    @Transactional
+    public ClubImageResponse updateClubImage(Long clubId, String imageUrl) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        club.updateImageUrl(imageUrl);
+        Club savedClub = clubRepository.save(club);
+
+        return ClubImageResponse.builder()
+                .clubId(savedClub.getId())
+                .clubName(savedClub.getName())
+                .imageUrl(savedClub.getImageUrl())
+                .build();
+    }
+
+    public ClubImageResponse getClubImage(Long clubId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        return ClubImageResponse.builder()
+                .clubId(club.getId())
+                .clubName(club.getName())
+                .imageUrl(club.getImageUrl())
+                .build();
     }
 }
 

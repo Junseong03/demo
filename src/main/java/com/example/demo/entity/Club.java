@@ -63,5 +63,12 @@ public class Club {
         CENTRAL, // 중앙
         DEPARTMENT // 학과
     }
+
+    // 해커톤용 간단한 업데이트 메서드
+    public void updateImageUrl(String imageUrl) {
+        if (imageUrl != null) {
+            this.imageUrl = imageUrl;
+        }
+    }
 }
 

@@ -1,10 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.ClubDetailDto;
-import com.example.demo.dto.ClubDto;
-import com.example.demo.dto.ClubInquiryRequest;
-import com.example.demo.dto.CreateClubRequest;
-import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.*;
 import com.example.demo.service.ClubService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +49,34 @@ public class ClubController {
             @Valid @RequestBody ClubInquiryRequest request) {
         clubService.createInquiry(clubId, userId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{clubId}/admin")
+    public ResponseEntity<ClubAdminDto> getClubAdmin(@PathVariable Long clubId) {
+        ClubAdminDto admin = clubService.getClubAdmin(clubId);
+        return ResponseEntity.ok(admin);
+    }
+
+    @PutMapping("/{clubId}/admin")
+    public ResponseEntity<ClubAdminDto> updateClubAdmin(
+            @PathVariable Long clubId,
+            @RequestParam Long userId) {
+        ClubAdminDto admin = clubService.updateClubAdmin(clubId, userId);
+        return ResponseEntity.ok(admin);
+    }
+
+    @GetMapping("/{clubId}/image")
+    public ResponseEntity<ClubImageResponse> getClubImage(@PathVariable Long clubId) {
+        ClubImageResponse response = clubService.getClubImage(clubId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{clubId}/image")
+    public ResponseEntity<ClubImageResponse> updateClubImage(
+            @PathVariable Long clubId,
+            @Valid @RequestBody UpdateClubImageRequest request) {
+        ClubImageResponse response = clubService.updateClubImage(clubId, request.getImageUrl());
+        return ResponseEntity.ok(response);
     }
 }
 

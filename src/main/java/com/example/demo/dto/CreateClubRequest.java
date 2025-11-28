@@ -36,5 +36,8 @@ public class CreateClubRequest {
     private List<String> tags; // 선택 (Service에서 검증)
 
     private Boolean isRecruiting = false; // 기본값 false
+
+    @NotNull(message = "회장(생성자) userId는 필수입니다.")
+    private Long userId; // 동아리 생성자 (회장으로 자동 설정)
 }
 

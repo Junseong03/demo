@@ -325,7 +325,8 @@
   "imageUrl": "string (optional)",
   "snsLink": "string (optional)",
   "tags": ["string"] (optional),
-  "isRecruiting": "boolean (optional, default: false)"
+  "isRecruiting": "boolean (optional, default: false)",
+  "userId": "number (required) - 동아리 생성자 (회장으로 자동 설정)"
 }
 ```
 
@@ -363,6 +364,116 @@
 - `tags`는 배열로 전달하거나, 프론트엔드에서 쉼표로 구분된 문자열을 배열로 변환하여 전달할 수 있습니다.
 - `type`은 `CENTRAL` (중앙동아리) 또는 `DEPARTMENT` (과동아리)만 가능합니다.
 - 동아리 이름 중복 시: `"이미 존재하는 동아리 이름입니다."` 에러 메시지 반환
+- `userId`로 지정한 사용자가 동아리 생성 시 자동으로 회장(ADMIN)으로 설정됩니다.
+
+---
+
+### 4.5 동아리 회장 조회
+
+**GET** `/api/clubs/{clubId}/admin`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Response:** `200 OK`
+```json
+{
+  "userId": 1,
+  "userName": "김학생",
+  "userEmail": "student1@university.ac.kr",
+  "clubId": 1,
+  "clubName": "알고리즘 동아리"
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+---
+
+### 4.6 동아리 회장 변경
+
+**PUT** `/api/clubs/{clubId}/admin`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId` (required): 새 회장으로 지정할 사용자 ID
+
+**Response:** `200 OK`
+```json
+{
+  "userId": 2,
+  "userName": "이학생",
+  "userEmail": "student2@university.ac.kr",
+  "clubId": 1,
+  "clubName": "알고리즘 동아리"
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+- `404 Not Found`: 기존 회장을 찾을 수 없습니다
+
+**참고:**
+- 기존 회장은 자동으로 일반 멤버(MEMBER)로 변경됩니다.
+- 새 회장이 이미 동아리 멤버인 경우 역할만 변경되고, 멤버가 아닌 경우 자동으로 멤버로 추가됩니다.
+
+---
+
+### 4.7 동아리 이미지 조회
+
+**GET** `/api/clubs/{clubId}/image`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Response:** `200 OK`
+```json
+{
+  "clubId": 1,
+  "clubName": "알고리즘 동아리",
+  "imageUrl": "https://example.com/club1.jpg"
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+---
+
+### 4.8 동아리 이미지 업데이트
+
+**PUT** `/api/clubs/{clubId}/image`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Request Body:**
+```json
+{
+  "imageUrl": "string (required)"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "clubId": 1,
+  "clubName": "알고리즘 동아리",
+  "imageUrl": "https://example.com/new-club-image.jpg"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 이미지 URL은 필수입니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+**참고:**
+- 해커톤용으로 이미지 URL만 저장합니다. 실제 파일 업로드는 향후 구현 예정입니다.
 
 ---
 
