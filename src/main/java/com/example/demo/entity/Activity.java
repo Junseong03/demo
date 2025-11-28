@@ -39,6 +39,10 @@ public class Activity {
 
     private String organizer; // 주최
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id")
+    private Club club; // 동아리 (교내 활동의 경우)
+
     private LocalDate deadline; // 마감일
 
     private LocalDate startDate; // 시작일 (캘린더용)

@@ -40,5 +40,9 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     Page<Activity> findByTypeAndCategoryAndKeyword(@Param("type") Activity.ActivityType type, @Param("category") Activity.ActivityCategory category, @Param("keyword") String keyword, Pageable pageable);
     
     Page<Activity> findAll(Pageable pageable);
+    
+    // 동아리별 활동 조회
+    List<Activity> findByClubId(Long clubId);
+    Page<Activity> findByClubId(Long clubId, Pageable pageable);
 }
 

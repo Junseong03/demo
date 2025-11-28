@@ -177,5 +177,71 @@ public class ClubController {
         clubService.deleteClubImage(clubId);
         return ResponseEntity.ok().build();
     }
+
+    // 동아리 활동 조회
+    @GetMapping("/{clubId}/activities")
+    public ResponseEntity<PageResponse<ActivityDto>> getClubActivities(
+            @PathVariable Long clubId,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "100") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ActivityDto> response = clubService.getClubActivities(clubId, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    // 동아리 부원 목록 조회
+    @GetMapping("/{clubId}/members")
+    public ResponseEntity<PageResponse<ClubMemberDto>> getClubMembers(
+            @PathVariable Long clubId,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "100") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ClubMemberDto> response = clubService.getClubMembers(clubId, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    // 동아리 가입 신청
+    @PostMapping("/{clubId}/applications")
+    public ResponseEntity<ClubApplicationDto> createApplication(
+            @PathVariable Long clubId,
+            @RequestParam Long userId,
+            @Valid @RequestBody ClubApplicationRequest request) {
+        ClubApplicationDto application = clubService.createApplication(clubId, userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(application);
+    }
+
+    // 동아리 가입 신청 목록 조회 (회장용)
+    @GetMapping("/{clubId}/applications")
+    public ResponseEntity<PageResponse<ClubApplicationDto>> getApplications(
+            @PathVariable Long clubId,
+            @RequestParam Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "100") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ClubApplicationDto> response = clubService.getApplications(clubId, status, userId, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    // 동아리 가입 신청 승인
+    @PutMapping("/{clubId}/applications/{applicationId}/approve")
+    public ResponseEntity<ClubApplicationDto> approveApplication(
+            @PathVariable Long clubId,
+            @PathVariable Long applicationId,
+            @RequestParam Long userId) {
+        ClubApplicationDto application = clubService.approveApplication(clubId, applicationId, userId);
+        return ResponseEntity.ok(application);
+    }
+
+    // 동아리 가입 신청 거절
+    @PutMapping("/{clubId}/applications/{applicationId}/reject")
+    public ResponseEntity<ClubApplicationDto> rejectApplication(
+            @PathVariable Long clubId,
+            @PathVariable Long applicationId,
+            @RequestParam Long userId,
+            @RequestBody(required = false) RejectApplicationRequest request) {
+        ClubApplicationDto application = clubService.rejectApplication(clubId, applicationId, userId, request);
+        return ResponseEntity.ok(application);
+    }
 }
 
