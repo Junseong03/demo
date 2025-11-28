@@ -217,6 +217,30 @@ public class ClubService {
                 .build();
     }
 
+    @Transactional
+    public ClubImageResponse uploadClubImage(Long clubId, String uploadedFileUrl) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        club.updateImageUrl(uploadedFileUrl);
+        Club savedClub = clubRepository.save(club);
+
+        return ClubImageResponse.builder()
+                .clubId(savedClub.getId())
+                .clubName(savedClub.getName())
+                .imageUrl(savedClub.getImageUrl())
+                .build();
+    }
+
+    @Transactional
+    public void deleteClubImage(Long clubId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        club.updateImageUrl(null);
+        clubRepository.save(club);
+    }
+
     public ClubImageResponse getClubImage(Long clubId) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));

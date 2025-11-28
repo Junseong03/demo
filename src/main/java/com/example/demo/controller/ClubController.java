@@ -2,19 +2,25 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.*;
 import com.example.demo.service.ClubService;
+import com.example.demo.service.FileStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.InputStream;
 
 @RestController
 @RequestMapping("/api/clubs")
 @RequiredArgsConstructor
 public class ClubController {
     private final ClubService clubService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<PageResponse<ClubDto>> getClubs(
@@ -77,6 +83,63 @@ public class ClubController {
             @Valid @RequestBody UpdateClubImageRequest request) {
         ClubImageResponse response = clubService.updateClubImage(clubId, request.getImageUrl());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/{clubId}/image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ClubImageResponse> uploadClubImage(
+            @PathVariable Long clubId,
+            @RequestParam("file") MultipartFile file) {
+        // 파일 유효성 검사
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        }
+
+        // MinIO에 파일 업로드
+        String uploadedUrl = fileStorageService.uploadFile(file, "clubs/" + clubId);
+        
+        // 동아리 이미지 URL 업데이트
+        ClubImageResponse response = clubService.uploadClubImage(clubId, uploadedUrl);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{clubId}/image/download")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadClubImage(
+            @PathVariable Long clubId) {
+        ClubImageResponse imageInfo = clubService.getClubImage(clubId);
+        
+        if (imageInfo.getImageUrl() == null || imageInfo.getImageUrl().isEmpty()) {
+            throw new com.example.demo.exception.ResourceNotFoundException("동아리 이미지가 없습니다.");
+        }
+
+        // MinIO에서 파일 다운로드
+        String fileName = fileStorageService.extractFileNameFromUrl(imageInfo.getImageUrl());
+        InputStream inputStream = fileStorageService.downloadFile(fileName);
+        
+        org.springframework.core.io.Resource resource = new org.springframework.core.io.InputStreamResource(inputStream);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
+    }
+
+    @DeleteMapping("/{clubId}/image")
+    public ResponseEntity<Void> deleteClubImage(@PathVariable Long clubId) {
+        ClubImageResponse imageInfo = clubService.getClubImage(clubId);
+        
+        // MinIO에서 파일 삭제 (있는 경우)
+        if (imageInfo.getImageUrl() != null && !imageInfo.getImageUrl().isEmpty()) {
+            String fileName = fileStorageService.extractFileNameFromUrl(imageInfo.getImageUrl());
+            fileStorageService.deleteFile(fileName);
+        }
+        
+        // DB에서 이미지 URL 삭제
+        clubService.deleteClubImage(clubId);
+        return ResponseEntity.ok().build();
     }
 }
 

@@ -473,7 +473,74 @@
 - `404 Not Found`: 동아리를 찾을 수 없습니다
 
 **참고:**
-- 해커톤용으로 이미지 URL만 저장합니다. 실제 파일 업로드는 향후 구현 예정입니다.
+- URL 방식: 이미지 URL을 직접 입력하여 저장할 수 있습니다 (기존 방식).
+- 파일 업로드 방식: 실제 이미지 파일을 업로드하여 MinIO에 저장할 수 있습니다 (권장).
+
+---
+
+### 4.9 동아리 이미지 파일 업로드
+
+**POST** `/api/clubs/{clubId}/image/upload`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Request:**
+- Content-Type: `multipart/form-data`
+- `file` (required): 이미지 파일 (PNG, JPEG 등)
+
+**Response:** `200 OK`
+```json
+{
+  "clubId": 1,
+  "clubName": "알고리즘 동아리",
+  "imageUrl": "http://localhost:9000/club-images/clubs/1/uuid.jpg"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 파일이 비어있습니다
+- `400 Bad Request`: 이미지 파일만 업로드 가능합니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+**참고:**
+- MinIO를 사용하여 파일을 저장합니다.
+- 업로드된 파일은 `clubs/{clubId}/` 폴더에 저장됩니다.
+- 파일명은 UUID로 자동 생성됩니다.
+
+---
+
+### 4.10 동아리 이미지 파일 다운로드
+
+**GET** `/api/clubs/{clubId}/image/download`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Response:** `200 OK`
+- Content-Type: `image/jpeg` 또는 `image/png`
+- Body: 이미지 파일 바이너리
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 동아리 이미지가 없습니다
+
+---
+
+### 4.11 동아리 이미지 삭제
+
+**DELETE** `/api/clubs/{clubId}/image`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Response:** `200 OK` (빈 응답)
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+**참고:**
+- MinIO에서 파일을 삭제하고, 데이터베이스의 이미지 URL도 삭제합니다.
 
 ---
 
