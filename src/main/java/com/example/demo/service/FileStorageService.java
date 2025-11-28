@@ -10,6 +10,7 @@ import io.minio.RemoveObjectArgs;
 import io.minio.SetBucketPolicyArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FileStorageService {
+public class FileStorageService implements CommandLineRunner {
     private final MinioClient minioClient;
     private final MinIOConfig minIOConfig;
 
@@ -33,8 +34,7 @@ public class FileStorageService {
                 minioClient.makeBucket(MakeBucketArgs.builder()
                         .bucket(minIOConfig.getBucketName())
                         .build());
-                
-                // 버킷 정책을 public-read로 설정 (해커톤용 - 외부에서 이미지 접근 가능)
+                // 새로 생성된 버킷에 정책 설정
                 setBucketPublicReadPolicy();
             }
 
@@ -105,6 +105,34 @@ public class FileStorageService {
             return parts[parts.length - 2] + "/" + parts[parts.length - 1];
         }
         return parts[parts.length - 1];
+    }
+    
+    @Override
+    public void run(String... args) {
+        // 애플리케이션 시작 시 버킷 정책 설정
+        initializeBucketPolicy();
+    }
+    
+    private void initializeBucketPolicy() {
+        try {
+            // 버킷이 존재하는지 확인
+            boolean found = minioClient.bucketExists(BucketExistsArgs.builder()
+                    .bucket(minIOConfig.getBucketName())
+                    .build());
+            
+            if (found) {
+                // 버킷이 존재하면 정책 설정
+                setBucketPublicReadPolicy();
+            } else {
+                // 버킷이 없으면 생성하고 정책 설정
+                minioClient.makeBucket(MakeBucketArgs.builder()
+                        .bucket(minIOConfig.getBucketName())
+                        .build());
+                setBucketPublicReadPolicy();
+            }
+        } catch (Exception e) {
+            log.warn("MinIO 버킷 초기화 실패: {}", e.getMessage());
+        }
     }
     
     private void setBucketPublicReadPolicy() {
