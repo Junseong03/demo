@@ -623,7 +623,8 @@
 - `404 Not Found`: 동아리를 찾을 수 없습니다
 
 **참고:**
-- `role`: `PRESIDENT` (회장, ADMIN 역할), `MEMBER` (일반 부원)
+- `role`: `PRESIDENT` (회장), `VICE_PRESIDENT` (부대표), `ADMIN` (관리자), `MEMBER` (일반 부원)
+- 회장이 항상 리스트의 첫 번째로 나옵니다 (정렬 기준: PRESIDENT > VICE_PRESIDENT > ADMIN > MEMBER)
 
 ---
 
@@ -804,6 +805,168 @@
 - `404 Not Found`: 가입 신청을 찾을 수 없습니다
 - `404 Not Found`: 동아리를 찾을 수 없습니다
 - `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+---
+
+### 4.18 현재 사용자의 동아리 멤버십 확인
+
+**GET** `/api/clubs/{clubId}/membership`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 사용자 ID
+
+**Response:** `200 OK`
+```json
+{
+  "isMember": true,
+  "role": "PRESIDENT",
+  "joinedAt": "2024-01-01T00:00:00"
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- `role`: `PRESIDENT` (회장), `VICE_PRESIDENT` (부대표), `ADMIN` (관리자), `MEMBER` (일반 부원)
+- `isMember`: `false`인 경우 `role`은 `null`
+
+---
+
+### 4.19 동아리 정보 수정
+
+**PUT** `/api/clubs/{clubId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 수정하는 사용자 ID (권한 확인용)
+
+**Request Body:**
+```json
+{
+  "description": "string (optional, max 500자)",
+  "fullDescription": "string (optional, max 1000자)",
+  "snsLink": "string (optional)",
+  "isRecruiting": "boolean (optional)",
+  "tags": ["string"] (optional)
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "name": "알고리즘 동아리",
+  "type": "CENTRAL",
+  "department": "중앙동아리",
+  "description": "수정된 설명",
+  "fullDescription": "수정된 상세 설명",
+  "imageUrl": "https://example.com/club1.jpg",
+  "snsLink": "https://instagram.com/algorithm_club",
+  "isRecruiting": true,
+  "tags": ["개발", "프로그래밍", "알고리즘"]
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 동아리 정보를 수정할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT) 또는 관리자(ADMIN)만 수정 가능
+- `name`, `type`, `department`는 수정 불가 (동아리 생성 시에만 설정)
+
+---
+
+### 4.20 동아리 부원 권한 변경
+
+**PUT** `/api/clubs/{clubId}/members/{memberUserId}/role`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `memberUserId`: 권한을 변경할 부원의 사용자 ID
+
+**Query Parameters:**
+- `userId`: 권한을 변경하는 회장의 사용자 ID (권한 확인용)
+
+**Request Body:**
+```json
+{
+  "role": "VICE_PRESIDENT"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "userId": 2,
+  "name": "이부원",
+  "email": "member@university.ac.kr",
+  "major": "소프트웨어학과",
+  "role": "VICE_PRESIDENT",
+  "joinedAt": "2024-02-01T00:00:00"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 부원 권한을 변경할 수 있습니다
+- `400 Bad Request`: 잘못된 역할입니다 (PRESIDENT, VICE_PRESIDENT, ADMIN, MEMBER 중 하나)
+- `400 Bad Request`: 회장 권한은 변경할 수 없습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 부원을 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT)만 권한 변경 가능
+- 회장 자신의 권한은 변경 불가
+- `role` 값: `PRESIDENT` (회장), `VICE_PRESIDENT` (부대표), `ADMIN` (관리자), `MEMBER` (일반 부원)
+
+---
+
+### 4.21 동아리 활동 사진 업로드
+
+**POST** `/api/clubs/{clubId}/activities/{activityId}/image/upload`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+
+**Query Parameters:**
+- `userId`: 업로드하는 사용자 ID (권한 확인용)
+
+**Request:**
+- Content-Type: `multipart/form-data`
+- `file` (required): 이미지 파일 (PNG, JPEG 등)
+
+**Response:** `200 OK`
+```json
+{
+  "activityId": 1,
+  "imageUrl": "http://localhost:9000/club-images/clubs/1/activities/1/uuid.jpg"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 활동 사진을 업로드할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 파일이 비어있습니다
+- `400 Bad Request`: 이미지 파일만 업로드 가능합니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT) 또는 관리자(ADMIN)만 업로드 가능
+- MinIO를 사용하여 파일을 저장합니다.
+- 업로드된 파일은 `club-images/clubs/{clubId}/activities/{activityId}/` 폴더에 저장됩니다.
 
 ---
 
