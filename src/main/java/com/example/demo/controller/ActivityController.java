@@ -2,13 +2,16 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.ActivityDetailDto;
 import com.example.demo.dto.ActivityDto;
+import com.example.demo.dto.ActivityImageResponse;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.service.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
