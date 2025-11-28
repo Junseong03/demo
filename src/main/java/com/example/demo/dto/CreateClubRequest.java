@@ -22,14 +22,11 @@ public class CreateClubRequest {
     private Club.ClubType type;
 
     @NotBlank(message = "소속/학과는 필수입니다.")
-    @Pattern(regexp = "^[a-zA-Z0-9가-힣\\s]+$", message = "소속/학과는 영어, 숫자, 한글만 입력 가능합니다.")
     private String department;
 
     @NotBlank(message = "간단한 설명은 필수입니다.")
-    @Pattern(regexp = "^[a-zA-Z0-9가-힣\\s]+$", message = "간단한 설명은 영어, 숫자, 한글만 입력 가능합니다.")
     private String description;
 
-    @Pattern(regexp = "^[a-zA-Z0-9가-힣\\s]*$", message = "상세 설명은 영어, 숫자, 한글만 입력 가능합니다.")
     private String fullDescription; // 선택
 
     private String imageUrl; // 선택 (URL이므로 특수기호 허용)

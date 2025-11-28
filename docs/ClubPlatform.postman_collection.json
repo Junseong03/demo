@@ -595,6 +595,43 @@
 					}
 				},
 				{
+					"name": "3-10-1. 동아리 생성 (특수문자 포함 설명)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"동아리 생성 성공 (특수문자 포함 설명)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.description).to.include(\"@\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"특수문자 테스트 동아리\",\n    \"type\": \"CENTRAL\",\n    \"department\": \"컴퓨터공학과 (CS)\",\n    \"description\": \"개발 동아리입니다! @everyone 환영합니다.\",\n    \"fullDescription\": \"이 동아리는 개발과 프로그래밍에 관심이 있는 학생들을 위한 동아리입니다.\\n\\n- 매주 정기 모임\\n- 프로젝트 진행\\n- 스터디 그룹\",\n    \"tags\": [\"개발\", \"프로그래밍\"],\n    \"isRecruiting\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						},
+						"description": "department, description, fullDescription에는 특수문자가 허용됩니다."
+					}
+				},
+				{
 					"name": "3-11. 동아리 생성 (최소 필드만)",
 					"event": [
 						{
@@ -704,13 +741,13 @@
 					}
 				},
 				{
-					"name": "3-14. 동아리 생성 실패 (특수기호 포함)",
+					"name": "3-14. 동아리 생성 실패 (이름에 특수기호 포함)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"동아리 생성 실패 (특수기호 포함)\", function () {",
+									"pm.test(\"동아리 생성 실패 (이름에 특수기호 포함)\", function () {",
 									"    pm.response.to.have.status(400);",
 									"    var jsonData = pm.response.json();",
 									"    pm.expect(jsonData.message).to.include(\"영어, 숫자, 한글만\");",
@@ -737,7 +774,7 @@
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "clubs"]
 						},
-						"description": "특수기호가 포함된 이름으로 생성 시도 시 400 에러가 발생합니다."
+						"description": "동아리 이름에 특수기호가 포함된 경우 400 에러가 발생합니다. (department, description 등은 특수기호 허용)"
 					}
 				},
 				{

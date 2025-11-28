@@ -353,8 +353,9 @@
 ```
 
 **유효성 검사 규칙:**
-- `name`, `department`, `description`, `fullDescription`: 영어, 숫자, 한글만 입력 가능 (공백 포함)
+- `name`: 영어, 숫자, 한글만 입력 가능 (공백 포함)
 - `tags`: 각 태그는 영어, 숫자, 한글만 입력 가능 (공백 제외)
+- `department`, `description`, `fullDescription`: 특수문자 포함 가능
 - `imageUrl`, `snsLink`: URL이므로 특수기호 허용
 - 동아리 이름은 중복될 수 없습니다 (이미 존재하는 이름이면 `400 Bad Request`)
 
