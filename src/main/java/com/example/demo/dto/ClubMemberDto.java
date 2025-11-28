@@ -21,12 +21,29 @@ public class ClubMemberDto {
     private LocalDateTime joinedAt;
 
     public static ClubMemberDto from(ClubMember clubMember) {
+        String roleName;
+        switch (clubMember.getRole()) {
+            case PRESIDENT:
+                roleName = "PRESIDENT";
+                break;
+            case VICE_PRESIDENT:
+                roleName = "VICE_PRESIDENT";
+                break;
+            case ADMIN:
+                roleName = "ADMIN";
+                break;
+            case MEMBER:
+            default:
+                roleName = "MEMBER";
+                break;
+        }
+        
         return ClubMemberDto.builder()
                 .userId(clubMember.getUser().getId())
                 .name(clubMember.getUser().getName())
                 .email(clubMember.getUser().getEmail())
                 .major(clubMember.getUser().getMajor())
-                .role(clubMember.getRole() == ClubMember.MemberRole.ADMIN ? "PRESIDENT" : "MEMBER")
+                .role(roleName)
                 .joinedAt(clubMember.getJoinedAt())
                 .build();
     }

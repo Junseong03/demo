@@ -149,13 +149,13 @@ public class ClubService {
         try {
             Club savedClub = clubRepository.save(club);
 
-            // 동아리 생성자를 회장(ADMIN)으로 자동 설정
-            ClubMember adminMember = ClubMember.builder()
+            // 동아리 생성자를 회장(PRESIDENT)으로 자동 설정
+            ClubMember presidentMember = ClubMember.builder()
                     .user(user)
                     .club(savedClub)
-                    .role(ClubMember.MemberRole.ADMIN)
+                    .role(ClubMember.MemberRole.PRESIDENT)
                     .build();
-            clubMemberRepository.save(adminMember);
+            clubMemberRepository.save(presidentMember);
 
             return ClubDto.from(savedClub);
         } catch (DataIntegrityViolationException e) {
@@ -169,10 +169,10 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        return ClubAdminDto.from(admin);
+        return ClubAdminDto.from(president);
     }
 
     @Transactional
@@ -184,33 +184,33 @@ public class ClubService {
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
         // 기존 회장 찾기
-        ClubMember existingAdmin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+        ClubMember existingPresident = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("기존 회장을 찾을 수 없습니다."));
 
         // 새 회장이 이미 동아리 멤버인지 확인
-        ClubMember newAdminMember = clubMemberRepository.findByUserIdAndClubId(newAdminUserId, clubId)
+        ClubMember newPresidentMember = clubMemberRepository.findByUserIdAndClubId(newAdminUserId, clubId)
                 .orElse(null);
 
         // 기존 회장을 일반 멤버로 변경
-        existingAdmin.updateRole(ClubMember.MemberRole.MEMBER);
-        clubMemberRepository.save(existingAdmin);
+        existingPresident.updateRole(ClubMember.MemberRole.MEMBER);
+        clubMemberRepository.save(existingPresident);
 
         // 새 회장 설정
-        if (newAdminMember != null) {
+        if (newPresidentMember != null) {
             // 이미 멤버인 경우 역할만 변경
-            newAdminMember.updateRole(ClubMember.MemberRole.ADMIN);
-            clubMemberRepository.save(newAdminMember);
+            newPresidentMember.updateRole(ClubMember.MemberRole.PRESIDENT);
+            clubMemberRepository.save(newPresidentMember);
         } else {
             // 새로 멤버 추가
-            newAdminMember = ClubMember.builder()
+            newPresidentMember = ClubMember.builder()
                     .user(newAdmin)
                     .club(club)
-                    .role(ClubMember.MemberRole.ADMIN)
+                    .role(ClubMember.MemberRole.PRESIDENT)
                     .build();
-            clubMemberRepository.save(newAdminMember);
+            clubMemberRepository.save(newPresidentMember);
         }
 
-        return ClubAdminDto.from(newAdminMember);
+        return ClubAdminDto.from(newPresidentMember);
     }
 
     @Transactional
@@ -282,14 +282,26 @@ public class ClubService {
                 .build();
     }
 
-    // 동아리 부원 목록 조회
+    // 동아리 부원 목록 조회 (역할 순서대로 정렬: PRESIDENT > VICE_PRESIDENT > ADMIN > MEMBER)
     public PageResponse<ClubMemberDto> getClubMembers(Long clubId, Pageable pageable) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
-        Page<ClubMember> memberPage = clubMemberRepository.findByClubId(clubId, pageable);
+        // 역할 순서대로 정렬된 부원 목록 조회
+        Page<ClubMember> memberPage = clubMemberRepository.findByClubIdOrderByRoleAscJoinedAtAsc(clubId, pageable);
 
-        List<ClubMemberDto> content = memberPage.getContent().stream()
+        // 역할 우선순위에 따라 정렬 (PRESIDENT > VICE_PRESIDENT > ADMIN > MEMBER)
+        List<ClubMember> sortedMembers = new ArrayList<>(memberPage.getContent());
+        sortedMembers.sort((m1, m2) -> {
+            int priority1 = getRolePriority(m1.getRole());
+            int priority2 = getRolePriority(m2.getRole());
+            if (priority1 != priority2) {
+                return Integer.compare(priority1, priority2);
+            }
+            return m1.getJoinedAt().compareTo(m2.getJoinedAt());
+        });
+
+        List<ClubMemberDto> content = sortedMembers.stream()
                 .map(ClubMemberDto::from)
                 .collect(Collectors.toList());
 
@@ -299,6 +311,20 @@ public class ClubService {
                 .size(memberPage.getSize())
                 .totalElements(memberPage.getTotalElements())
                 .build();
+    }
+    
+    private int getRolePriority(ClubMember.MemberRole role) {
+        switch (role) {
+            case PRESIDENT:
+                return 1;
+            case VICE_PRESIDENT:
+                return 2;
+            case ADMIN:
+                return 3;
+            case MEMBER:
+            default:
+                return 4;
+        }
     }
 
     // 동아리 가입 신청
@@ -336,10 +362,10 @@ public class ClubService {
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
         // 회장 권한 확인
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!admin.getUser().getId().equals(userId)) {
+        if (!president.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("회장만 가입 신청 목록을 조회할 수 있습니다.");
         }
 
@@ -370,10 +396,10 @@ public class ClubService {
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
         // 회장 권한 확인
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!admin.getUser().getId().equals(userId)) {
+        if (!president.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("회장만 가입 신청을 승인할 수 있습니다.");
         }
 
@@ -406,10 +432,10 @@ public class ClubService {
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
         // 회장 권한 확인
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!admin.getUser().getId().equals(userId)) {
+        if (!president.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("회장만 가입 신청을 거절할 수 있습니다.");
         }
 
@@ -425,6 +451,129 @@ public class ClubService {
         clubApplicationRepository.save(application);
 
         return ClubApplicationDto.from(application);
+    }
+
+    // 현재 사용자의 동아리 멤버십 확인
+    public ClubMembershipDto getMembership(Long clubId, Long userId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        Optional<ClubMember> member = clubMemberRepository.findByUserIdAndClubId(userId, clubId);
+        
+        if (member.isEmpty()) {
+            return ClubMembershipDto.builder()
+                    .isMember(false)
+                    .role(null)
+                    .joinedAt(null)
+                    .build();
+        }
+
+        ClubMember clubMember = member.get();
+        String roleName;
+        switch (clubMember.getRole()) {
+            case PRESIDENT:
+                roleName = "PRESIDENT";
+                break;
+            case VICE_PRESIDENT:
+                roleName = "VICE_PRESIDENT";
+                break;
+            case ADMIN:
+                roleName = "ADMIN";
+                break;
+            case MEMBER:
+            default:
+                roleName = "MEMBER";
+                break;
+        }
+
+        return ClubMembershipDto.builder()
+                .isMember(true)
+                .role(roleName)
+                .joinedAt(clubMember.getJoinedAt())
+                .build();
+    }
+
+    // 동아리 정보 수정 (회장 또는 관리자만 가능)
+    @Transactional
+    public ClubDetailDto updateClub(Long clubId, Long userId, UpdateClubRequest request) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 회장 또는 관리자 권한 확인
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+        if (member.getRole() != ClubMember.MemberRole.PRESIDENT && 
+            member.getRole() != ClubMember.MemberRole.ADMIN) {
+            throw new IllegalArgumentException("회장이나 관리자만 동아리 정보를 수정할 수 있습니다.");
+        }
+
+        // 태그 검증 및 처리
+        List<String> tags = new ArrayList<>();
+        if (request.getTags() != null) {
+            for (String tag : request.getTags()) {
+                if (tag != null && !tag.matches("^[a-zA-Z0-9가-힣]+$")) {
+                    throw new IllegalArgumentException("태그는 영어, 숫자, 한글만 입력 가능합니다: " + tag);
+                }
+                if (tag != null && !tag.trim().isEmpty()) {
+                    tags.add(tag.trim());
+                }
+            }
+        }
+
+        // 동아리 정보 업데이트
+        club.updateInfo(
+                request.getDescription(),
+                request.getFullDescription(),
+                request.getSnsLink(),
+                request.getIsRecruiting(),
+                tags.isEmpty() ? null : tags
+        );
+
+        Club savedClub = clubRepository.save(club);
+        return ClubDetailDto.from(savedClub);
+    }
+
+    // 동아리 부원 권한 변경 (회장만 가능)
+    @Transactional
+    public ClubMemberDto updateMemberRole(Long clubId, Long memberUserId, Long userId, UpdateMemberRoleRequest request) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+
+        // 회장 권한 확인
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(clubId, ClubMember.MemberRole.PRESIDENT)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
+
+        if (!president.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("회장만 부원 권한을 변경할 수 있습니다.");
+        }
+
+        // 권한을 변경할 부원 찾기
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(memberUserId, clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("부원을 찾을 수 없습니다."));
+
+        // 회장 자신의 권한은 변경 불가
+        if (member.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("회장 권한은 변경할 수 없습니다.");
+        }
+
+        // 역할 변환
+        ClubMember.MemberRole newRole;
+        try {
+            newRole = ClubMember.MemberRole.valueOf(request.getRole());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 역할입니다 (PRESIDENT, VICE_PRESIDENT, ADMIN, MEMBER 중 하나)");
+        }
+
+        // 역할 업데이트
+        member.updateRole(newRole);
+        ClubMember savedMember = clubMemberRepository.save(member);
+
+        return ClubMemberDto.from(savedMember);
     }
 }
 

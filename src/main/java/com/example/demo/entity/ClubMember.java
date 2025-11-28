@@ -35,8 +35,10 @@ public class ClubMember {
     private LocalDateTime joinedAt = LocalDateTime.now();
 
     public enum MemberRole {
-        MEMBER, // 일반 멤버
-        ADMIN // 운영진
+        MEMBER,         // 일반 멤버
+        ADMIN,          // 관리자
+        VICE_PRESIDENT, // 부대표
+        PRESIDENT       // 회장
     }
 
     // 해커톤용 간단한 업데이트 메서드

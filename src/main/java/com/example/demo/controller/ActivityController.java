@@ -36,5 +36,16 @@ public class ActivityController {
         ActivityDetailDto activity = activityService.getActivityDetail(activityId);
         return ResponseEntity.ok(activity);
     }
+
+    // 동아리 활동 사진 업로드 (회장 또는 관리자만 가능)
+    @PostMapping(value = "/clubs/{clubId}/activities/{activityId}/image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ActivityImageResponse> uploadActivityImage(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId,
+            @RequestParam Long userId,
+            @RequestParam("file") MultipartFile file) {
+        ActivityImageResponse response = activityService.uploadActivityImage(clubId, activityId, userId, file);
+        return ResponseEntity.ok(response);
+    }
 }
 

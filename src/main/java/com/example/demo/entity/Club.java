@@ -70,5 +70,23 @@ public class Club {
             this.imageUrl = imageUrl;
         }
     }
+    
+    public void updateInfo(String description, String fullDescription, String snsLink, Boolean isRecruiting, List<String> tags) {
+        if (description != null) {
+            this.description = description;
+        }
+        if (fullDescription != null) {
+            this.fullDescription = fullDescription;
+        }
+        if (snsLink != null) {
+            this.snsLink = snsLink;
+        }
+        if (isRecruiting != null) {
+            this.isRecruiting = isRecruiting;
+        }
+        if (tags != null) {
+            this.tags = new ArrayList<>(tags);
+        }
+    }
 }
 

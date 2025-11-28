@@ -243,5 +243,35 @@ public class ClubController {
         ClubApplicationDto application = clubService.rejectApplication(clubId, applicationId, userId, request);
         return ResponseEntity.ok(application);
     }
+
+    // 현재 사용자의 동아리 멤버십 확인
+    @GetMapping("/{clubId}/membership")
+    public ResponseEntity<ClubMembershipDto> getMembership(
+            @PathVariable Long clubId,
+            @RequestParam Long userId) {
+        ClubMembershipDto membership = clubService.getMembership(clubId, userId);
+        return ResponseEntity.ok(membership);
+    }
+
+    // 동아리 정보 수정 (회장 또는 관리자만 가능)
+    @PutMapping("/{clubId}")
+    public ResponseEntity<ClubDetailDto> updateClub(
+            @PathVariable Long clubId,
+            @RequestParam Long userId,
+            @Valid @RequestBody UpdateClubRequest request) {
+        ClubDetailDto updatedClub = clubService.updateClub(clubId, userId, request);
+        return ResponseEntity.ok(updatedClub);
+    }
+
+    // 동아리 부원 권한 변경 (회장만 가능)
+    @PutMapping("/{clubId}/members/{memberUserId}/role")
+    public ResponseEntity<ClubMemberDto> updateMemberRole(
+            @PathVariable Long clubId,
+            @PathVariable Long memberUserId,
+            @RequestParam Long userId,
+            @Valid @RequestBody UpdateMemberRoleRequest request) {
+        ClubMemberDto member = clubService.updateMemberRole(clubId, memberUserId, userId, request);
+        return ResponseEntity.ok(member);
+    }
 }
 

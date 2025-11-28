@@ -50,6 +50,12 @@ public class Activity {
     private String link; // 관련 링크
 
     private String imageUrl; // 대표 이미지
+    
+    public void updateImageUrl(String imageUrl) {
+        if (imageUrl != null) {
+            this.imageUrl = imageUrl;
+        }
+    }
 
     @ElementCollection
     @CollectionTable(name = "activity_tags", joinColumns = @JoinColumn(name = "activity_id"))

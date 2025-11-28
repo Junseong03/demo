@@ -13,7 +13,7 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
 
     List<ClubMember> findByClubId(Long clubId);
     
-    org.springframework.data.domain.Page<ClubMember> findByClubId(Long clubId, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<ClubMember> findByClubIdOrderByRoleAscJoinedAtAsc(Long clubId, org.springframework.data.domain.Pageable pageable);
 
     Optional<ClubMember> findByUserIdAndClubId(Long userId, Long clubId);
 

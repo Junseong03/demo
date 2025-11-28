@@ -68,10 +68,10 @@ public class ChatService {
                 .orElseThrow(() -> new ResourceNotFoundException("채팅방을 찾을 수 없습니다."));
 
         // 회장 권한 확인
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!admin.getUser().getId().equals(userId)) {
+        if (!president.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("회장만 채팅 메시지를 조회할 수 있습니다.");
         }
 
@@ -98,10 +98,10 @@ public class ChatService {
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
         // 회장 권한 확인
-        ClubMember admin = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.ADMIN)
+        ClubMember president = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!admin.getUser().getId().equals(userId)) {
+        if (!president.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("회장만 채팅 메시지를 전송할 수 있습니다.");
         }
 
