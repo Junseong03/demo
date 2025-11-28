@@ -1583,7 +1583,48 @@
 
 ## 9. 채팅 API
 
-### 9.1 채팅방 생성/조회
+### 9.1 회장용 채팅방 목록 조회
+
+**GET** `/api/me/chat-rooms`
+
+**Query Parameters:**
+- `userId` (required): 회장의 사용자 ID
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "clubId": 1,
+      "clubName": "알고리즘 동아리",
+      "userId": 10,
+      "userName": "김학생",
+      "lastMessage": "안녕하세요!",
+      "lastMessageTime": "2024-12-01T10:00:00",
+      "unreadCount": 2,
+      "createdAt": "2024-12-01T09:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 1
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장이 회장인 모든 동아리의 채팅방 목록을 조회합니다
+- 각 채팅방의 마지막 메시지와 읽지 않은 메시지 개수(`unreadCount`)를 포함합니다
+- `unreadCount`는 현재 전체 메시지 개수로 반환됩니다 (향후 읽음 처리 기능 추가 시 수정 예정)
+
+---
+
+### 9.2 채팅방 생성/조회
 
 **GET** `/api/clubs/{clubId}/chat-rooms`
 
@@ -1656,7 +1697,7 @@
 
 ---
 
-### 9.3 채팅 메시지 전송 (회장용)
+### 9.4 채팅 메시지 전송 (회장용)
 
 **POST** `/api/chat-rooms/{chatRoomId}/messages`
 
