@@ -4,6 +4,7 @@ import com.example.demo.dto.JobPostDetailDto;
 import com.example.demo.dto.JobPostDto;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.entity.JobPost;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.JobPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,7 +44,7 @@ public class JobPostService {
 
     public JobPostDetailDto getJobPostDetail(Long jobId) {
         JobPost jobPost = jobPostRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("채용 공고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("채용 공고를 찾을 수 없습니다."));
         return JobPostDetailDto.from(jobPost);
     }
 }

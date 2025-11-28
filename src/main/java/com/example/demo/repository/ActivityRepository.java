@@ -27,6 +27,18 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     @Query("SELECT a FROM Activity a WHERE a.deadline >= :from AND a.deadline <= :to ORDER BY a.deadline ASC")
     List<Activity> findByDateRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
     
+    @Query("SELECT a FROM Activity a WHERE a.title LIKE %:keyword% OR a.description LIKE %:keyword%")
+    List<Activity> searchByKeyword(@Param("keyword") String keyword);
+    
+    @Query("SELECT a FROM Activity a WHERE a.title LIKE %:keyword% OR a.description LIKE %:keyword%")
+    Page<Activity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    
+    @Query("SELECT a FROM Activity a WHERE a.type = :type AND (a.title LIKE %:keyword% OR a.description LIKE %:keyword%)")
+    Page<Activity> findByTypeAndKeyword(@Param("type") Activity.ActivityType type, @Param("keyword") String keyword, Pageable pageable);
+    
+    @Query("SELECT a FROM Activity a WHERE a.type = :type AND a.category = :category AND (a.title LIKE %:keyword% OR a.description LIKE %:keyword%)")
+    Page<Activity> findByTypeAndCategoryAndKeyword(@Param("type") Activity.ActivityType type, @Param("category") Activity.ActivityCategory category, @Param("keyword") String keyword, Pageable pageable);
+    
     Page<Activity> findAll(Pageable pageable);
 }
 

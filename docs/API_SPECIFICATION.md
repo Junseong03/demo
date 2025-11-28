@@ -6,6 +6,18 @@
 - **Content-Type**: `application/json`
 - **인증 방식**: 현재는 userId를 쿼리 파라미터로 전달 (해커톤용 간단 구현)
 
+## HTTP 상태 코드
+
+- **200 OK**: 성공
+- **400 Bad Request**: 잘못된 요청 (파라미터 오류, 유효성 검사 실패 등)
+- **404 Not Found**: 리소스를 찾을 수 없음 (존재하지 않는 ID 등)
+- **401 Unauthorized**: 인증 필요 (향후 확장 예정)
+
+**예시:**
+- 동아리를 찾을 수 없습니다 → `404 Not Found`
+- 잘못된 userId → `400 Bad Request`
+- (향후) 로그인 필요 → `401 Unauthorized`
+
 ---
 
 ## 1. 인증 API
@@ -208,25 +220,9 @@
 - `tag` (optional): 태그명 (예: "개발", "디자인")
 - `keyword` (optional): 검색 키워드
 - `page` (optional, default: 0): 페이지 번호 (0부터 시작)
-- `size` (optional, default: 10): 페이지 크기
+- `size` (optional, default: 100): 페이지 크기 (해커톤용: 기본값 100으로 사실상 전체 조회)
 
-**Response (페이지네이션 없음):** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "name": "알고리즘 동아리",
-    "type": "CENTRAL",
-    "department": "중앙동아리",
-    "description": "알고리즘 문제 해결 및 코딩 테스트 준비",
-    "imageUrl": "https://example.com/club1.jpg",
-    "isRecruiting": true,
-    "tags": ["개발", "프로그래밍", "알고리즘"]
-  }
-]
-```
-
-**Response (페이지네이션):** `200 OK`
+**Response:** `200 OK` (항상 페이지네이션 객체)
 ```json
 {
   "content": [
@@ -242,16 +238,19 @@
     }
   ],
   "page": 0,
-  "size": 10,
+  "size": 100,
   "totalElements": 42
 }
 ```
 
 **예시:**
-- `/api/clubs?type=CENTRAL` - 중앙 동아리만 (기본 배열 반환)
+- `/api/clubs?type=CENTRAL` - 중앙 동아리만 (기본 size=100)
 - `/api/clubs?type=CENTRAL&page=0&size=10` - 중앙 동아리 (페이지네이션)
 - `/api/clubs?type=CENTRAL&tag=개발` - 중앙 동아리 중 개발 태그
 - `/api/clubs?keyword=알고리즘` - 키워드 검색
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다 (잘못된 clubId)
 
 ---
 
@@ -300,6 +299,8 @@
 **Response:** `200 OK` (빈 응답)
 
 **에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
 ```json
 {
   "message": "동아리를 찾을 수 없습니다.",
@@ -318,41 +319,42 @@
 **Query Parameters:**
 - `type` (optional): `IN_SCHOOL` 또는 `OUT_SCHOOL`
 - `category` (optional): `CONTEST`, `COMPETITION`, `VOLUNTEER`, `OTHER`
+- `keyword` (optional): 검색 키워드 (제목, 설명에서 검색)
 - `page` (optional, default: 0): 페이지 번호 (0부터 시작)
-- `size` (optional, default: 10): 페이지 크기
+- `size` (optional, default: 100): 페이지 크기 (해커톤용: 기본값 100으로 사실상 전체 조회)
 
-**Response (페이지네이션 없음):** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "title": "2024 교내 프로그래밍 경진대회",
-    "description": "알고리즘 문제 해결 능력을 겨루는 대회",
-    "type": "IN_SCHOOL",
-    "category": "COMPETITION",
-    "organizer": "컴퓨터공학과",
-    "deadline": "2024-12-31",
-    "link": "https://example.com/contest1",
-    "imageUrl": "https://example.com/activity1.jpg",
-    "tags": ["개발", "프로그래밍", "대회"]
-  }
-]
-```
-
-**Response (페이지네이션):** `200 OK`
+**Response:** `200 OK` (항상 페이지네이션 객체)
 ```json
 {
-  "content": [...],
+  "content": [
+    {
+      "id": 1,
+      "title": "2024 교내 프로그래밍 경진대회",
+      "description": "알고리즘 문제 해결 능력을 겨루는 대회",
+      "type": "IN_SCHOOL",
+      "category": "COMPETITION",
+      "organizer": "컴퓨터공학과",
+      "deadline": "2024-12-31",
+      "link": "https://example.com/contest1",
+      "imageUrl": "https://example.com/activity1.jpg",
+      "tags": ["개발", "프로그래밍", "대회"]
+    }
+  ],
   "page": 0,
-  "size": 10,
+  "size": 100,
   "totalElements": 15
 }
 ```
 
 **예시:**
-- `/api/activities?type=IN_SCHOOL` - 교내 활동만 (기본 배열 반환)
+- `/api/activities?type=IN_SCHOOL` - 교내 활동만 (기본 size=100)
 - `/api/activities?type=IN_SCHOOL&page=0&size=10` - 교내 활동 (페이지네이션)
 - `/api/activities?type=IN_SCHOOL&category=CONTEST` - 교내 공모전만
+- `/api/activities?keyword=프로그래밍` - 키워드 검색 (제목/설명에서 검색)
+- `/api/activities?type=IN_SCHOOL&keyword=해커톤` - 교내 활동 중 키워드 검색
+
+**에러 응답:**
+- `404 Not Found`: 활동을 찾을 수 없습니다 (잘못된 activityId)
 
 ---
 
@@ -393,18 +395,23 @@
 - `from` (required): 시작 날짜 (YYYY-MM-DD)
 - `to` (required): 종료 날짜 (YYYY-MM-DD)
 
-**Response:** `200 OK`
+**Response:** `200 OK` (배열)
 ```json
 [
   {
     "id": 1,
     "title": "2024 교내 프로그래밍 경진대회",
-    "type": "ACTIVITY",
-    "date": "2024-12-31",
-    "link": "/api/activities/1"
+    "targetType": "ACTIVITY",
+    "targetId": 1,
+    "date": "2024-12-31"
   }
 ]
 ```
+
+**참고:**
+- `targetType`: `ACTIVITY`, `CLUB_NOTICE` 등
+- `targetId`: 해당 타입의 ID
+- 프론트에서 `targetType === "ACTIVITY"`면 `/activities/{targetId}`로 라우팅
 
 **예시:**
 - `/api/calendar?from=2024-01-01&to=2024-12-31`
@@ -419,33 +426,31 @@
 
 **Query Parameters:**
 - `page` (optional, default: 0): 페이지 번호 (0부터 시작)
-- `size` (optional, default: 10): 페이지 크기
+- `size` (optional, default: 100): 페이지 크기 (해커톤용: 기본값 100으로 사실상 전체 조회)
 
-**Response (페이지네이션 없음):** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "companyName": "테크 스타트업 A",
-    "position": "백엔드 개발자",
-    "description": "Spring Boot 기반 백엔드 개발자 채용",
-    "location": "서울",
-    "deadline": "2024-12-31",
-    "link": "https://example.com/job1",
-    "tags": ["백엔드", "Spring", "Java"]
-  }
-]
-```
-
-**Response (페이지네이션):** `200 OK`
+**Response:** `200 OK` (항상 페이지네이션 객체)
 ```json
 {
-  "content": [...],
+  "content": [
+    {
+      "id": 1,
+      "companyName": "테크 스타트업 A",
+      "position": "백엔드 개발자",
+      "description": "Spring Boot 기반 백엔드 개발자 채용",
+      "location": "서울",
+      "deadline": "2024-12-31",
+      "link": "https://example.com/job1",
+      "tags": ["백엔드", "Spring", "Java"]
+    }
+  ],
   "page": 0,
-  "size": 10,
+  "size": 100,
   "totalElements": 25
 }
 ```
+
+**에러 응답:**
+- `404 Not Found`: 채용 공고를 찾을 수 없습니다 (잘못된 jobId)
 
 ---
 
@@ -482,32 +487,30 @@
 **Query Parameters:**
 - `userId` (required): 사용자 ID
 - `page` (optional, default: 0): 페이지 번호 (0부터 시작)
-- `size` (optional, default: 10): 페이지 크기
+- `size` (optional, default: 100): 페이지 크기 (해커톤용: 기본값 100으로 사실상 전체 조회)
 
-**Response (페이지네이션 없음):** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "clubId": 1,
-    "clubName": "알고리즘 동아리",
-    "title": "알고리즘 스터디 모집",
-    "content": "매주 화요일 오후 7시에 알고리즘 문제를 함께 풀어요!",
-    "author": "동아리장",
-    "createdAt": "2024-01-01T10:00:00"
-  }
-]
-```
-
-**Response (페이지네이션):** `200 OK`
+**Response:** `200 OK` (항상 페이지네이션 객체)
 ```json
 {
-  "content": [...],
+  "content": [
+    {
+      "id": 1,
+      "clubId": 1,
+      "clubName": "알고리즘 동아리",
+      "title": "알고리즘 스터디 모집",
+      "content": "매주 화요일 오후 7시에 알고리즘 문제를 함께 풀어요!",
+      "author": "동아리장",
+      "createdAt": "2024-01-01T10:00:00"
+    }
+  ],
   "page": 0,
-  "size": 10,
+  "size": 100,
   "totalElements": 8
 }
 ```
+
+**에러 응답:**
+- `404 Not Found`: 사용자를 찾을 수 없습니다 (잘못된 userId)
 
 ---
 
@@ -518,7 +521,7 @@
 **Path Parameters:**
 - `clubId`: 동아리 ID
 
-**Response:** `200 OK`
+**Response:** `200 OK` (배열 - 특정 동아리 공지는 공지 수가 많지 않으므로 배열로 반환)
 ```json
 [
   {
@@ -532,6 +535,11 @@
   }
 ]
 ```
+
+**참고:** `/api/me/notices`는 여러 동아리 공지를 합산하므로 페이지네이션을 사용하지만, 특정 동아리 공지는 배열로 반환합니다.
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다 (잘못된 clubId)
 
 ---
 
@@ -565,33 +573,31 @@
 
 **Query Parameters:**
 - `page` (optional, default: 0): 페이지 번호 (0부터 시작)
-- `size` (optional, default: 10): 페이지 크기
+- `size` (optional, default: 100): 페이지 크기 (해커톤용: 기본값 100으로 사실상 전체 조회)
 
-**Response (페이지네이션 없음):** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "userName": "김학생",
-    "major": "컴퓨터공학과",
-    "introduction": "백엔드 개발에 관심이 많은 컴공과 학생입니다.",
-    "skills": ["Java", "Spring Boot", "MySQL", "Redis"],
-    "currentAffiliation": "웹 개발 동아리",
-    "portfolioLink": "https://github.com/student1",
-    "availableProjectTypes": ["웹 개발", "API 개발", "백엔드"]
-  }
-]
-```
-
-**Response (페이지네이션):** `200 OK`
+**Response:** `200 OK` (항상 페이지네이션 객체)
 ```json
 {
-  "content": [...],
+  "content": [
+    {
+      "id": 1,
+      "userName": "김학생",
+      "major": "컴퓨터공학과",
+      "introduction": "백엔드 개발에 관심이 많은 컴공과 학생입니다.",
+      "skills": ["Java", "Spring Boot", "MySQL", "Redis"],
+      "currentAffiliation": "웹 개발 동아리",
+      "portfolioLink": "https://github.com/student1",
+      "availableProjectTypes": ["웹 개발", "API 개발", "백엔드"]
+    }
+  ],
   "page": 0,
-  "size": 10,
+  "size": 100,
   "totalElements": 12
 }
 ```
+
+**에러 응답:**
+- `404 Not Found`: 인재 프로필을 찾을 수 없습니다 (잘못된 talentId)
 
 ---
 
@@ -631,7 +637,8 @@
 
 **HTTP 상태 코드:**
 - `200 OK`: 성공
-- `400 Bad Request`: 잘못된 요청 (유효성 검사 실패, 리소스 없음 등)
+- `400 Bad Request`: 잘못된 요청 (유효성 검사 실패, 파라미터 오류 등)
+- `404 Not Found`: 리소스를 찾을 수 없음 (존재하지 않는 ID 등)
 
 ---
 
@@ -668,13 +675,19 @@
 4. **데이터베이스**: H2 인메모리 데이터베이스를 사용하며, 애플리케이션 시작 시 더미 데이터가 자동으로 생성됩니다.
 
 5. **페이지네이션**: 
-   - `page`와 `size` 파라미터를 전달하면 페이지네이션 응답 형식으로 반환됩니다.
-   - 파라미터를 전달하지 않으면 기본적으로 배열 형식으로 반환됩니다 (하위 호환성).
+   - **모든 목록 API는 항상 페이지네이션 객체로 응답합니다** (프론트 개발 편의성).
    - `page`는 0부터 시작합니다.
-   - 기본 `size`는 10입니다.
+   - 기본 `size`는 100입니다 (해커톤용: 사실상 전체 조회 가능).
+   - 프론트에서 `size`를 크게 설정하여 전체 조회처럼 사용할 수 있습니다.
+   - 예외: `/api/clubs/{clubId}/notices`는 배열로 반환 (특정 동아리 공지는 공지 수가 많지 않음).
 
 6. **운영자용 쓰기 API**: 
    - 현재는 조회/문의 중심의 API만 제공됩니다.
    - 동아리/활동/취업공고/공지 등록은 서버 시작 시 더미 데이터(DataInitializer)로 처리됩니다.
    - 운영자용 관리 API는 향후 계획으로 발표 시 언급 가능합니다.
+
+7. **향후 확장 계획** (발표용 설명):
+   - **동아리 가입 관리**: 현재는 더미 데이터로 회원-동아리 관계를 판단합니다. 추후 `GET /api/me/clubs` (내가 가입한 동아리 리스트) 및 가입 API 추가 예정.
+   - **문의 조회**: 운영진이 문의를 읽는 `GET /api/clubs/{clubId}/inquiries` (운영자 전용) 추가 예정.
+   - **인재 프로필 생성/수정**: 학생이 직접 프로필을 등록하는 `POST /api/talents`, `PUT /api/talents/{id}` 추가 예정.
 

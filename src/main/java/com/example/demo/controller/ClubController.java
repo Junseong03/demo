@@ -21,23 +21,17 @@ public class ClubController {
     private final ClubService clubService;
 
     @GetMapping
-    public ResponseEntity<?> getClubs(
+    public ResponseEntity<PageResponse<ClubDto>> getClubs(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String tag,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "100") int size) {
         
-        // 페이지네이션 파라미터가 기본값이 아니거나 명시적으로 전달된 경우
-        if (page > 0 || size != 10) {
-            Pageable pageable = PageRequest.of(page, size);
-            PageResponse<ClubDto> response = clubService.getClubsWithPagination(type, tag, keyword, pageable);
-            return ResponseEntity.ok(response);
-        }
-        
-        // 기본값이면 기존처럼 List 반환 (하위 호환성)
-        List<ClubDto> clubs = clubService.getClubs(type, tag, keyword);
-        return ResponseEntity.ok(clubs);
+        // 해커톤용: size 기본값을 100으로 설정하여 사실상 전체 조회 가능
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ClubDto> response = clubService.getClubsWithPagination(type, tag, keyword, pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{clubId}")

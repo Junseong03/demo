@@ -7,6 +7,7 @@ import com.example.demo.dto.PageResponse;
 import com.example.demo.entity.Club;
 import com.example.demo.entity.ClubInquiry;
 import com.example.demo.entity.User;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.ClubInquiryRepository;
 import com.example.demo.repository.ClubRepository;
 import com.example.demo.repository.UserRepository;
@@ -76,16 +77,16 @@ public class ClubService {
 
     public ClubDetailDto getClubDetail(Long clubId) {
         Club club = clubRepository.findById(clubId)
-                .orElseThrow(() -> new RuntimeException("동아리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
         return ClubDetailDto.from(club);
     }
 
     @Transactional
     public void createInquiry(Long clubId, Long userId, ClubInquiryRequest request) {
         Club club = clubRepository.findById(clubId)
-                .orElseThrow(() -> new RuntimeException("동아리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
         ClubInquiry inquiry = ClubInquiry.builder()
                 .club(club)

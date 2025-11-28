@@ -19,18 +19,13 @@ public class JobPostController {
     private final JobPostService jobPostService;
 
     @GetMapping
-    public ResponseEntity<?> getJobPosts(
+    public ResponseEntity<PageResponse<JobPostDto>> getJobPosts(
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "100") int size) {
         
-        if (page > 0 || size != 10) {
-            Pageable pageable = PageRequest.of(page, size);
-            PageResponse<JobPostDto> response = jobPostService.getJobPostsWithPagination(pageable);
-            return ResponseEntity.ok(response);
-        }
-        
-        List<JobPostDto> jobs = jobPostService.getJobPosts();
-        return ResponseEntity.ok(jobs);
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<JobPostDto> response = jobPostService.getJobPostsWithPagination(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{jobId}")

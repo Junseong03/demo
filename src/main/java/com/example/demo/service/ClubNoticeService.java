@@ -4,6 +4,7 @@ import com.example.demo.dto.ClubNoticeDto;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.entity.ClubNotice;
 import com.example.demo.entity.ClubMember;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.ClubMemberRepository;
 import com.example.demo.repository.ClubNoticeRepository;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,7 @@ public class ClubNoticeService {
 
     public ClubNoticeDto getNoticeDetail(Long noticeId) {
         ClubNotice notice = clubNoticeRepository.findById(noticeId)
-                .orElseThrow(() -> new RuntimeException("공지를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("공지를 찾을 수 없습니다."));
         return ClubNoticeDto.from(notice);
     }
 }

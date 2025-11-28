@@ -24,9 +24,9 @@ public class CalendarService {
                 .map(activity -> CalendarEventDto.builder()
                         .id(activity.getId())
                         .title(activity.getTitle())
-                        .type("ACTIVITY")
+                        .targetType("ACTIVITY")
+                        .targetId(activity.getId())
                         .date(activity.getDeadline() != null ? activity.getDeadline() : activity.getStartDate())
-                        .link("/api/activities/" + activity.getId())
                         .build())
                 .collect(Collectors.toList());
     }

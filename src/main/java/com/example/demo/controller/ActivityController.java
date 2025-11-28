@@ -19,20 +19,16 @@ public class ActivityController {
     private final ActivityService activityService;
 
     @GetMapping
-    public ResponseEntity<?> getActivities(
+    public ResponseEntity<PageResponse<ActivityDto>> getActivities(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "100") int size) {
         
-        if (page > 0 || size != 10) {
-            Pageable pageable = PageRequest.of(page, size);
-            PageResponse<ActivityDto> response = activityService.getActivitiesWithPagination(type, category, pageable);
-            return ResponseEntity.ok(response);
-        }
-        
-        List<ActivityDto> activities = activityService.getActivities(type, category);
-        return ResponseEntity.ok(activities);
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ActivityDto> response = activityService.getActivitiesWithPagination(type, category, keyword, pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{activityId}")

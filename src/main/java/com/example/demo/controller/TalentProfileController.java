@@ -18,18 +18,13 @@ public class TalentProfileController {
     private final TalentProfileService talentProfileService;
 
     @GetMapping
-    public ResponseEntity<?> getTalentProfiles(
+    public ResponseEntity<PageResponse<TalentProfileDto>> getTalentProfiles(
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "100") int size) {
         
-        if (page > 0 || size != 10) {
-            Pageable pageable = PageRequest.of(page, size);
-            PageResponse<TalentProfileDto> response = talentProfileService.getTalentProfilesWithPagination(pageable);
-            return ResponseEntity.ok(response);
-        }
-        
-        List<TalentProfileDto> profiles = talentProfileService.getTalentProfiles();
-        return ResponseEntity.ok(profiles);
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<TalentProfileDto> response = talentProfileService.getTalentProfilesWithPagination(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{talentId}")

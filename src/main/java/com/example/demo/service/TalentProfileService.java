@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.PageResponse;
 import com.example.demo.dto.TalentProfileDto;
 import com.example.demo.entity.TalentProfile;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.TalentProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -42,7 +43,7 @@ public class TalentProfileService {
 
     public TalentProfileDto getTalentProfileDetail(Long talentId) {
         TalentProfile profile = talentProfileRepository.findById(talentId)
-                .orElseThrow(() -> new RuntimeException("인재 프로필을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("인재 프로필을 찾을 수 없습니다."));
         return TalentProfileDto.from(profile);
     }
 }

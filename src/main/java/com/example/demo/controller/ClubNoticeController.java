@@ -18,23 +18,19 @@ public class ClubNoticeController {
     private final ClubNoticeService clubNoticeService;
 
     @GetMapping("/me/notices")
-    public ResponseEntity<?> getMyNotices(
+    public ResponseEntity<PageResponse<ClubNoticeDto>> getMyNotices(
             @RequestParam Long userId,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int size) {
+            @RequestParam(required = false, defaultValue = "100") int size) {
         
-        if (page > 0 || size != 10) {
-            Pageable pageable = PageRequest.of(page, size);
-            PageResponse<ClubNoticeDto> response = clubNoticeService.getMyNoticesWithPagination(userId, pageable);
-            return ResponseEntity.ok(response);
-        }
-        
-        List<ClubNoticeDto> notices = clubNoticeService.getMyNotices(userId);
-        return ResponseEntity.ok(notices);
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<ClubNoticeDto> response = clubNoticeService.getMyNoticesWithPagination(userId, pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/clubs/{clubId}/notices")
     public ResponseEntity<List<ClubNoticeDto>> getClubNotices(@PathVariable Long clubId) {
+        // 특정 동아리 공지는 배열로 반환 (공지 수가 많지 않으므로)
         List<ClubNoticeDto> notices = clubNoticeService.getClubNotices(clubId);
         return ResponseEntity.ok(notices);
     }
