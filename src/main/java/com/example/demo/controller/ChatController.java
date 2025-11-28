@@ -25,18 +25,19 @@ public class ChatController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    // 채팅 메시지 조회
+    // 채팅 메시지 조회 (회장만 조회 가능)
     @GetMapping("/chat-rooms/{chatRoomId}/messages")
     public ResponseEntity<PageResponse<ChatMessageDto>> getMessages(
             @PathVariable Long chatRoomId,
+            @RequestParam Long userId,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "100") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<ChatMessageDto> response = chatService.getMessages(chatRoomId, pageable);
+        PageResponse<ChatMessageDto> response = chatService.getMessages(chatRoomId, userId, pageable);
         return ResponseEntity.ok(response);
     }
 
-    // 채팅 메시지 전송
+    // 채팅 메시지 전송 (회장만 전송 가능)
     @PostMapping("/chat-rooms/{chatRoomId}/messages")
     public ResponseEntity<ChatMessageDto> sendMessage(
             @PathVariable Long chatRoomId,

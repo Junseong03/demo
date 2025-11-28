@@ -96,6 +96,11 @@ public class ClubService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
+        // 회장이나 이미 가입된 부원은 문의할 수 없음
+        if (clubMemberRepository.existsByUserIdAndClubId(userId, clubId)) {
+            throw new IllegalArgumentException("동아리 회장이나 부원은 문의할 수 없습니다.");
+        }
+
         ClubInquiry inquiry = ClubInquiry.builder()
                 .club(club)
                 .user(user)
@@ -304,9 +309,9 @@ public class ClubService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
-        // 이미 부원인지 확인
+        // 회장이나 이미 가입된 부원은 가입 신청할 수 없음
         if (clubMemberRepository.existsByUserIdAndClubId(userId, clubId)) {
-            throw new IllegalArgumentException("이미 동아리 부원입니다.");
+            throw new IllegalArgumentException("동아리 회장이나 부원은 가입 신청할 수 없습니다.");
         }
 
         // 이미 대기 중인 신청이 있는지 확인

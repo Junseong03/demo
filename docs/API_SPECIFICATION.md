@@ -299,14 +299,12 @@
 **Response:** `200 OK` (빈 응답)
 
 **에러 응답:**
+- `400 Bad Request`: 동아리 회장이나 부원은 문의할 수 없습니다
 - `404 Not Found`: 동아리를 찾을 수 없습니다
 - `404 Not Found`: 사용자를 찾을 수 없습니다
-```json
-{
-  "message": "동아리를 찾을 수 없습니다.",
-  "status": "error"
-}
-```
+
+**참고:**
+- 동아리 회장이나 이미 가입된 부원은 문의할 수 없습니다.
 
 ---
 
@@ -541,6 +539,271 @@
 
 **참고:**
 - MinIO에서 파일을 삭제하고, 데이터베이스의 이미지 URL도 삭제합니다.
+
+---
+
+### 4.12 동아리 활동 조회
+
+**GET** `/api/clubs/{clubId}/activities`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "2024 알고리즘 대회",
+      "description": "동아리 내부 알고리즘 대회",
+      "type": "IN_SCHOOL",
+      "category": "COMPETITION",
+      "organizer": "알고리즘 동아리",
+      "deadline": "2024-12-31",
+      "link": "https://example.com/activity1",
+      "imageUrl": "https://example.com/activity1.jpg",
+      "tags": ["알고리즘", "대회"]
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 1
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+---
+
+### 4.13 동아리 부원 목록 조회
+
+**GET** `/api/clubs/{clubId}/members`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "userId": 1,
+      "name": "김회장",
+      "email": "president@university.ac.kr",
+      "major": "컴퓨터공학과",
+      "role": "PRESIDENT",
+      "joinedAt": "2024-01-01T00:00:00"
+    },
+    {
+      "userId": 2,
+      "name": "이부원",
+      "email": "member@university.ac.kr",
+      "major": "소프트웨어학과",
+      "role": "MEMBER",
+      "joinedAt": "2024-02-01T00:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 2
+}
+```
+
+**에러 응답:**
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+
+**참고:**
+- `role`: `PRESIDENT` (회장, ADMIN 역할), `MEMBER` (일반 부원)
+
+---
+
+### 4.14 동아리 가입 신청
+
+**POST** `/api/clubs/{clubId}/applications`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 사용자 ID
+
+**Request Body:**
+```json
+{
+  "message": "string (optional, max 500자) - 가입 신청 메시지"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "clubId": 1,
+  "userId": 10,
+  "userName": "김학생",
+  "userEmail": "student1@university.ac.kr",
+  "major": "컴퓨터공학과",
+  "message": "동아리에 가입하고 싶습니다.",
+  "status": "PENDING",
+  "appliedAt": "2024-12-01T10:00:00",
+  "approvedAt": null,
+  "rejectedAt": null,
+  "rejectReason": null
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 동아리 회장이나 부원은 가입 신청할 수 없습니다
+- `400 Bad Request`: 이미 가입 신청이 있습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 동아리 회장이나 이미 가입된 부원은 가입 신청할 수 없습니다.
+
+---
+
+### 4.15 동아리 가입 신청 목록 조회 (회장용)
+
+**GET** `/api/clubs/{clubId}/applications`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 회장의 사용자 ID (권한 확인용)
+- `status` (optional): `PENDING`, `APPROVED`, `REJECTED` (필터링)
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "clubId": 1,
+      "userId": 10,
+      "userName": "김학생",
+      "userEmail": "student1@university.ac.kr",
+      "major": "컴퓨터공학과",
+      "message": "동아리에 가입하고 싶습니다.",
+      "status": "PENDING",
+      "appliedAt": "2024-12-01T10:00:00",
+      "approvedAt": null,
+      "rejectedAt": null,
+      "rejectReason": null
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 1
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 가입 신청 목록을 조회할 수 있습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 동아리 회장만 조회 가능합니다.
+
+---
+
+### 4.16 동아리 가입 신청 승인 (회장용)
+
+**PUT** `/api/clubs/{clubId}/applications/{applicationId}/approve`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `applicationId`: 가입 신청 ID
+
+**Query Parameters:**
+- `userId`: 승인하는 회장의 사용자 ID (권한 확인용)
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "clubId": 1,
+  "userId": 10,
+  "userName": "김학생",
+  "userEmail": "student1@university.ac.kr",
+  "major": "컴퓨터공학과",
+  "message": "동아리에 가입하고 싶습니다.",
+  "status": "APPROVED",
+  "appliedAt": "2024-12-01T10:00:00",
+  "approvedAt": "2024-12-01T11:00:00",
+  "rejectedAt": null,
+  "rejectReason": null
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 가입 신청을 승인할 수 있습니다
+- `400 Bad Request`: 이미 처리된 신청입니다
+- `404 Not Found`: 가입 신청을 찾을 수 없습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 승인 시 자동으로 동아리 멤버로 추가됩니다.
+
+---
+
+### 4.17 동아리 가입 신청 거절 (회장용)
+
+**PUT** `/api/clubs/{clubId}/applications/{applicationId}/reject`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `applicationId`: 가입 신청 ID
+
+**Query Parameters:**
+- `userId`: 거절하는 회장의 사용자 ID (권한 확인용)
+
+**Request Body (optional):**
+```json
+{
+  "reason": "string (optional) - 거절 사유"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "clubId": 1,
+  "userId": 10,
+  "userName": "김학생",
+  "userEmail": "student1@university.ac.kr",
+  "major": "컴퓨터공학과",
+  "message": "동아리에 가입하고 싶습니다.",
+  "status": "REJECTED",
+  "appliedAt": "2024-12-01T10:00:00",
+  "approvedAt": null,
+  "rejectedAt": "2024-12-01T11:00:00",
+  "rejectReason": "정원이 마감되었습니다."
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 가입 신청을 거절할 수 있습니다
+- `400 Bad Request`: 이미 처리된 신청입니다
+- `404 Not Found`: 가입 신청을 찾을 수 없습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
 
 ---
 
@@ -799,9 +1062,124 @@
 
 ---
 
-## 9. 인재 프로필 API
+## 9. 채팅 API
 
-### 9.1 인재 프로필 목록
+### 9.1 채팅방 생성/조회
+
+**GET** `/api/clubs/{clubId}/chat-rooms`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+
+**Query Parameters:**
+- `userId`: 사용자 ID
+
+**Response:** `200 OK`
+```json
+{
+  "id": 1,
+  "clubId": 1,
+  "userId": 10,
+  "clubName": "알고리즘 동아리",
+  "createdAt": "2024-12-01T10:00:00"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 동아리 회장이나 부원은 채팅방을 생성할 수 없습니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 기존 채팅방이 있으면 반환, 없으면 새로 생성하여 반환합니다.
+- 동아리 회장이나 이미 가입된 부원은 채팅방을 생성할 수 없습니다.
+
+---
+
+### 9.2 채팅방 메시지 조회 (회장용)
+
+**GET** `/api/chat-rooms/{chatRoomId}/messages`
+
+**Path Parameters:**
+- `chatRoomId`: 채팅방 ID
+
+**Query Parameters:**
+- `userId`: 회장의 사용자 ID (권한 확인용)
+- `page` (optional, default: 0): 페이지 번호
+- `size` (optional, default: 100): 페이지 크기
+
+**Response:** `200 OK`
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "chatRoomId": 1,
+      "senderId": 10,
+      "senderName": "김학생",
+      "message": "안녕하세요! 동아리에 관심이 있어서 문의드립니다.",
+      "timestamp": "2024-12-01T10:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 100,
+  "totalElements": 1
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 채팅 메시지를 조회할 수 있습니다
+- `404 Not Found`: 채팅방을 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 동아리 회장만 조회 가능합니다.
+
+---
+
+### 9.3 채팅 메시지 전송 (회장용)
+
+**POST** `/api/chat-rooms/{chatRoomId}/messages`
+
+**Path Parameters:**
+- `chatRoomId`: 채팅방 ID
+
+**Query Parameters:**
+- `userId`: 전송하는 회장의 사용자 ID (권한 확인용)
+
+**Request Body:**
+```json
+{
+  "message": "string (required, max 1000자)"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "chatRoomId": 1,
+  "senderId": 1,
+  "senderName": "김회장",
+  "message": "안녕하세요!",
+  "timestamp": "2024-12-01T10:00:00"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장만 채팅 메시지를 전송할 수 있습니다
+- `404 Not Found`: 채팅방을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+- `404 Not Found`: 동아리 회장을 찾을 수 없습니다
+
+**참고:**
+- 동아리 회장만 전송 가능합니다.
+
+---
+
+## 10. 인재 프로필 API
+
+### 10.1 인재 프로필 목록
 
 **GET** `/api/talents`
 
@@ -835,7 +1213,7 @@
 
 ---
 
-### 9.2 인재 프로필 상세
+### 10.2 인재 프로필 상세
 
 **GET** `/api/talents/{talentId}`
 
