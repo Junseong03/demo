@@ -25,7 +25,7 @@ public class ChatController {
         return ResponseEntity.ok(chatRoom);
     }
 
-    // 채팅 메시지 조회 (회장만 조회 가능)
+    // 채팅 메시지 조회 (회장 또는 채팅방의 일반 사용자만 조회 가능)
     @GetMapping("/chat-rooms/{chatRoomId}/messages")
     public ResponseEntity<PageResponse<ChatMessageDto>> getMessages(
             @PathVariable Long chatRoomId,
@@ -37,7 +37,7 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
-    // 채팅 메시지 전송 (회장만 전송 가능)
+    // 채팅 메시지 전송 (회장 또는 채팅방의 일반 사용자만 전송 가능)
     @PostMapping("/chat-rooms/{chatRoomId}/messages")
     public ResponseEntity<ChatMessageDto> sendMessage(
             @PathVariable Long chatRoomId,

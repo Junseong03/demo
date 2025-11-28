@@ -64,7 +64,7 @@ public class ChatService {
         return ChatRoomDto.from(savedRoom);
     }
 
-    // 채팅 메시지 조회 (회장만 조회 가능)
+    // 채팅 메시지 조회 (회장 또는 채팅방의 일반 사용자만 조회 가능)
     public PageResponse<ChatMessageDto> getMessages(Long chatRoomId, Long userId, Pageable pageable) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ResourceNotFoundException("채팅방을 찾을 수 없습니다."));
@@ -73,8 +73,12 @@ public class ChatService {
         ClubMember president = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!president.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("회장만 채팅 메시지를 조회할 수 있습니다.");
+        boolean isPresident = president.getUser().getId().equals(userId);
+        boolean isChatRoomUser = chatRoom.getUser().getId().equals(userId);
+
+        // 회장이거나 채팅방의 일반 사용자만 메시지 조회 가능
+        if (!isPresident && !isChatRoomUser) {
+            throw new IllegalArgumentException("회장이나 채팅방의 사용자만 메시지를 조회할 수 있습니다.");
         }
 
         Page<ChatMessage> messagePage = chatMessageRepository.findByChatRoomIdOrderByTimestampDesc(chatRoomId, pageable);
@@ -91,7 +95,7 @@ public class ChatService {
                 .build();
     }
 
-    // 채팅 메시지 전송 (회장만 전송 가능)
+    // 채팅 메시지 전송 (회장 또는 채팅방의 일반 사용자만 전송 가능)
     @Transactional
     public ChatMessageDto sendMessage(Long chatRoomId, Long userId, SendMessageRequest request) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
@@ -103,8 +107,12 @@ public class ChatService {
         ClubMember president = clubMemberRepository.findByClubIdAndRole(chatRoom.getClub().getId(), ClubMember.MemberRole.PRESIDENT)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리 회장을 찾을 수 없습니다."));
 
-        if (!president.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("회장만 채팅 메시지를 전송할 수 있습니다.");
+        boolean isPresident = president.getUser().getId().equals(userId);
+        boolean isChatRoomUser = chatRoom.getUser().getId().equals(userId);
+
+        // 회장이거나 채팅방의 일반 사용자만 메시지 전송 가능
+        if (!isPresident && !isChatRoomUser) {
+            throw new IllegalArgumentException("회장이나 채팅방의 사용자만 메시지를 전송할 수 있습니다.");
         }
 
         ChatMessage message = ChatMessage.builder()
