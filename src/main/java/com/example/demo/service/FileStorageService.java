@@ -8,6 +8,9 @@ import io.minio.PutObjectArgs;
 import io.minio.GetObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.SetBucketPolicyArgs;
+import io.minio.ListObjectsArgs;
+import io.minio.Result;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -109,11 +112,11 @@ public class FileStorageService implements CommandLineRunner {
     
     @Override
     public void run(String... args) {
-        // 애플리케이션 시작 시 버킷 정책 설정
-        initializeBucketPolicy();
+        // 애플리케이션 시작 시 버킷 초기화 및 정책 설정
+        initializeBucket();
     }
     
-    private void initializeBucketPolicy() {
+    private void initializeBucket() {
         try {
             // 버킷이 존재하는지 확인
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder()
@@ -121,7 +124,10 @@ public class FileStorageService implements CommandLineRunner {
                     .build());
             
             if (found) {
-                // 버킷이 존재하면 정책 설정
+                // 버킷이 존재하면 모든 객체 삭제 (이미지 초기화)
+                log.info("MinIO 버킷 초기화 중: {}", minIOConfig.getBucketName());
+                deleteAllObjectsInBucket();
+                // 정책 설정
                 setBucketPublicReadPolicy();
             } else {
                 // 버킷이 없으면 생성하고 정책 설정
@@ -132,6 +138,38 @@ public class FileStorageService implements CommandLineRunner {
             }
         } catch (Exception e) {
             log.warn("MinIO 버킷 초기화 실패: {}", e.getMessage());
+        }
+    }
+    
+    private void deleteAllObjectsInBucket() {
+        try {
+            // 버킷의 모든 객체 삭제
+            ListObjectsArgs listArgs = ListObjectsArgs.builder()
+                    .bucket(minIOConfig.getBucketName())
+                    .recursive(true)
+                    .build();
+            
+            Iterable<Result<Item>> objects = minioClient.listObjects(listArgs);
+            int deletedCount = 0;
+            
+            for (Result<Item> result : objects) {
+                Item item = result.get();
+                if (!item.isDir()) {
+                    minioClient.removeObject(RemoveObjectArgs.builder()
+                            .bucket(minIOConfig.getBucketName())
+                            .object(item.objectName())
+                            .build());
+                    deletedCount++;
+                }
+            }
+            
+            if (deletedCount > 0) {
+                log.info("MinIO 버킷에서 {}개의 객체를 삭제했습니다.", deletedCount);
+            } else {
+                log.info("MinIO 버킷이 이미 비어있습니다.");
+            }
+        } catch (Exception e) {
+            log.warn("MinIO 버킷 객체 삭제 실패: {}", e.getMessage());
         }
     }
     

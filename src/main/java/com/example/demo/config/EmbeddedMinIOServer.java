@@ -37,10 +37,18 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
     @Override
     public void run(String... args) {
         try {
-            // MinIO 데이터 디렉토리 생성
+            // MinIO 데이터 디렉토리 경로
             minioDataDir = Paths.get(System.getProperty("user.home"), ".minio", "data");
+            
+            // 서버 재시작 시 MinIO 데이터 초기화 (이미지 파일 삭제)
+            if (Files.exists(minioDataDir)) {
+                log.info("MinIO 데이터 디렉토리 초기화 중: {}", minioDataDir);
+                deleteDirectory(minioDataDir);
+            }
+            
+            // MinIO 데이터 디렉토리 생성
             Files.createDirectories(minioDataDir);
-            log.info("MinIO 데이터 디렉토리: {}", minioDataDir);
+            log.info("MinIO 데이터 디렉토리 생성 완료: {}", minioDataDir);
             
             // MinIO 바이너리 경로 확인
             String os = System.getProperty("os.name").toLowerCase();
@@ -258,6 +266,25 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
                 minioProcess.destroyForcibly();
             }
             log.info("MinIO 서버가 종료되었습니다.");
+        }
+    }
+    
+    private void deleteDirectory(Path directory) {
+        try {
+            if (Files.exists(directory)) {
+                java.nio.file.Files.walk(directory)
+                        .sorted(java.util.Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (IOException e) {
+                                log.warn("파일 삭제 실패: {} - {}", path, e.getMessage());
+                            }
+                        });
+                log.info("MinIO 데이터 디렉토리 초기화 완료");
+            }
+        } catch (IOException e) {
+            log.error("MinIO 데이터 디렉토리 초기화 실패: {}", e.getMessage(), e);
         }
     }
 }
