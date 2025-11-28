@@ -94,6 +94,12 @@ public class ActivityService {
     public ActivityDetailDto getActivityDetail(Long activityId) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+        
+        // LazyInitializationException 방지를 위해 images를 명시적으로 초기화
+        if (activity.getImages() != null) {
+            activity.getImages().size(); // Lazy 로딩 트리거
+        }
+        
         return ActivityDetailDto.from(activity);
     }
 
@@ -107,6 +113,11 @@ public class ActivityService {
         // 활동이 해당 동아리에 속하는지 확인
         if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
             throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        // LazyInitializationException 방지를 위해 images를 명시적으로 초기화
+        if (activity.getImages() != null) {
+            activity.getImages().size(); // Lazy 로딩 트리거
         }
 
         return ActivityDetailDto.from(activity);
@@ -152,6 +163,12 @@ public class ActivityService {
                 .build();
 
         Activity savedActivity = activityRepository.save(activity);
+        
+        // LazyInitializationException 방지를 위해 images를 명시적으로 초기화
+        if (savedActivity.getImages() != null) {
+            savedActivity.getImages().size(); // Lazy 로딩 트리거
+        }
+        
         return ActivityDetailDto.from(savedActivity);
     }
 
@@ -265,6 +282,12 @@ public class ActivityService {
         );
 
         Activity savedActivity = activityRepository.save(activity);
+        
+        // LazyInitializationException 방지를 위해 images를 명시적으로 초기화
+        if (savedActivity.getImages() != null) {
+            savedActivity.getImages().size(); // Lazy 로딩 트리거
+        }
+        
         return ActivityDetailDto.from(savedActivity);
     }
 
