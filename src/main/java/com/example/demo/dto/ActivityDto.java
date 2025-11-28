@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @NoArgsConstructor
@@ -23,13 +25,22 @@ public class ActivityDto {
     private LocalDate deadline;
     private String link;
     private String imageUrl;
+    private List<ActivityImageDto> images; // 활동 사진들
     private List<String> tags;
 
     public static ActivityDto from(Activity activity) {
         // LazyInitializationException 방지를 위해 리스트를 복사
         List<String> tags = activity.getTags() != null 
-                ? new java.util.ArrayList<>(activity.getTags()) 
-                : new java.util.ArrayList<>();
+                ? new ArrayList<>(activity.getTags()) 
+                : new ArrayList<>();
+        
+        // ActivityImage 리스트를 DTO로 변환
+        List<ActivityImageDto> images = new ArrayList<>();
+        if (activity.getImages() != null) {
+            images = activity.getImages().stream()
+                    .map(ActivityImageDto::from)
+                    .collect(Collectors.toList());
+        }
         
         return ActivityDto.builder()
                 .id(activity.getId())
@@ -41,6 +52,7 @@ public class ActivityDto {
                 .deadline(activity.getDeadline())
                 .link(activity.getLink())
                 .imageUrl(activity.getImageUrl())
+                .images(images)
                 .tags(tags)
                 .build();
     }

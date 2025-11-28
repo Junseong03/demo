@@ -265,14 +265,22 @@ public class ClubService {
     }
 
     // 동아리 활동 조회
+    @Transactional(readOnly = true)
     public PageResponse<ActivityDto> getClubActivities(Long clubId, Pageable pageable) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
 
         Page<Activity> activityPage = activityRepository.findByClubId(clubId, pageable);
 
+        // LazyInitializationException 방지를 위해 images를 명시적으로 로드
         List<ActivityDto> content = activityPage.getContent().stream()
-                .map(ActivityDto::from)
+                .map(activity -> {
+                    // images를 명시적으로 초기화
+                    if (activity.getImages() != null) {
+                        activity.getImages().size(); // Lazy 로딩 트리거
+                    }
+                    return ActivityDto.from(activity);
+                })
                 .collect(Collectors.toList());
 
         return PageResponse.<ActivityDto>builder()

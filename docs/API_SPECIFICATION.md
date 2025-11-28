@@ -623,6 +623,13 @@
       "deadline": "2024-12-31",
       "link": "https://example.com/activity1",
       "imageUrl": "https://example.com/activity1.jpg",
+      "images": [
+        {
+          "id": 1,
+          "url": "http://localhost:9000/club-images/clubs/1/activities/1/image1.jpg",
+          "uploadedAt": "2024-12-01T10:00:00"
+        }
+      ],
       "tags": ["알고리즘", "대회"]
     }
   ],
@@ -631,6 +638,10 @@
   "totalElements": 1
 }
 ```
+
+**참고:**
+- `images`: 활동 사진 배열 (각 이미지의 ID 포함)
+- 활동 목록에서도 썸네일 이미지를 표시할 수 있도록 `images` 배열이 포함됩니다
 
 **에러 응답:**
 - `404 Not Found`: 동아리를 찾을 수 없습니다
