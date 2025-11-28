@@ -120,9 +120,9 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
         command.add("server");
         command.add(minioDataDir.toString());
         command.add("--address");
-        command.add(":9000");
+        command.add("0.0.0.0:9000");  // 외부 접근 허용
         command.add("--console-address");
-        command.add(":9001");
+        command.add("0.0.0.0:9001");  // 외부 접근 허용
         
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.environment().put("MINIO_ROOT_USER", accessKey);
