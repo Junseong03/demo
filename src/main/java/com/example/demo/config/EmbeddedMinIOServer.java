@@ -54,9 +54,18 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
             // Linux/Mac인 경우 MinIO 서버 실행 시도
             String minioBinary = findMinIOBinary();
             if (minioBinary == null) {
-                log.warn("MinIO 바이너리를 찾을 수 없습니다. MinIO 서버를 수동으로 실행하세요.");
-                log.warn("MinIO 서버가 이미 실행 중인지 확인하세요: {}", endpoint);
-                return;
+                // MinIO 바이너리가 없으면 자동 다운로드 시도
+                log.info("MinIO 바이너리를 찾을 수 없습니다. 자동 다운로드를 시도합니다...");
+                Path minioHome = Paths.get(System.getProperty("user.home"), ".minio");
+                Path minioBinaryPath = downloadMinIOForLinuxMac(minioHome, os);
+                
+                if (minioBinaryPath != null && Files.exists(minioBinaryPath)) {
+                    minioBinary = minioBinaryPath.toString();
+                } else {
+                    log.warn("MinIO 바이너리 다운로드에 실패했습니다. MinIO 서버를 수동으로 실행하세요.");
+                    log.warn("MinIO 서버가 이미 실행 중인지 확인하세요: {}", endpoint);
+                    return;
+                }
             }
             
             // MinIO 서버 실행
@@ -158,20 +167,67 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
             String downloadUrl = "https://dl.min.io/server/minio/release/windows-amd64/minio.exe";
             
             log.info("MinIO 다운로드 중: {}", downloadUrl);
-            URL url = new URL(downloadUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(10000);
-            
-            try (java.io.InputStream inputStream = connection.getInputStream()) {
-                Files.copy(inputStream, minioBinary, StandardCopyOption.REPLACE_EXISTING);
-                // 실행 권한 부여 (Windows에서는 필요 없지만, 호환성을 위해)
-                minioBinary.toFile().setExecutable(true);
-                log.info("MinIO 바이너리 다운로드 완료: {}", minioBinary);
-            }
+            downloadAndSaveBinary(downloadUrl, minioBinary);
+            log.info("MinIO 바이너리 다운로드 완료: {}", minioBinary);
         } catch (Exception e) {
             log.error("MinIO 바이너리 다운로드 실패: {}", e.getMessage(), e);
             log.warn("MinIO 서버를 수동으로 다운로드하고 실행하세요: https://min.io/download");
+        }
+    }
+    
+    private Path downloadMinIOForLinuxMac(Path minioHome, String os) {
+        try {
+            Files.createDirectories(minioHome);
+            
+            // OS 및 아키텍처에 맞는 MinIO 바이너리 URL 결정
+            String arch = System.getProperty("os.arch").toLowerCase();
+            String downloadUrl;
+            String binaryName;
+            
+            if (os.contains("mac")) {
+                if (arch.contains("aarch64") || arch.contains("arm64")) {
+                    downloadUrl = "https://dl.min.io/server/minio/release/darwin-arm64/minio";
+                    binaryName = "minio";
+                } else {
+                    downloadUrl = "https://dl.min.io/server/minio/release/darwin-amd64/minio";
+                    binaryName = "minio";
+                }
+            } else {
+                // Linux
+                if (arch.contains("aarch64") || arch.contains("arm64")) {
+                    downloadUrl = "https://dl.min.io/server/minio/release/linux-arm64/minio";
+                    binaryName = "minio";
+                } else {
+                    downloadUrl = "https://dl.min.io/server/minio/release/linux-amd64/minio";
+                    binaryName = "minio";
+                }
+            }
+            
+            Path minioBinary = minioHome.resolve(binaryName);
+            
+            log.info("MinIO 다운로드 중: {} (OS: {}, Arch: {})", downloadUrl, os, arch);
+            downloadAndSaveBinary(downloadUrl, minioBinary);
+            
+            // 실행 권한 부여 (Linux/Mac 필수)
+            minioBinary.toFile().setExecutable(true);
+            log.info("MinIO 바이너리 다운로드 완료: {}", minioBinary);
+            
+            return minioBinary;
+        } catch (Exception e) {
+            log.error("MinIO 바이너리 다운로드 실패: {}", e.getMessage(), e);
+            log.warn("MinIO 서버를 수동으로 다운로드하고 실행하세요: https://min.io/download");
+            return null;
+        }
+    }
+    
+    private void downloadAndSaveBinary(String downloadUrl, Path targetPath) throws IOException {
+        URL url = new URL(downloadUrl);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setConnectTimeout(30000); // 30초로 증가 (OCI 환경 고려)
+        connection.setReadTimeout(60000); // 60초로 증가
+        
+        try (java.io.InputStream inputStream = connection.getInputStream()) {
+            Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
     
