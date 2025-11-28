@@ -351,7 +351,7 @@ public class ClubService {
 
         // 이미 대기 중인 신청이 있는지 확인
         if (clubApplicationRepository.existsByClubIdAndUserIdAndStatus(clubId, userId, ClubApplication.ApplicationStatus.PENDING)) {
-            throw new IllegalArgumentException("이미 가입 신청이 있습니다.");
+            throw new IllegalArgumentException("승인 대기중입니다.");
         }
 
         ClubApplication application = ClubApplication.builder()

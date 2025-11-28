@@ -182,13 +182,14 @@ public class ActivityService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
-        // 회장 또는 관리자 권한 확인
+        // 회장, 부회장, 관리자 권한 확인
         ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
                 .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
 
         if (member.getRole() != ClubMember.MemberRole.PRESIDENT && 
+            member.getRole() != ClubMember.MemberRole.VICE_PRESIDENT &&
             member.getRole() != ClubMember.MemberRole.ADMIN) {
-            throw new IllegalArgumentException("회장이나 관리자만 활동 사진을 업로드할 수 있습니다.");
+            throw new IllegalArgumentException("회장, 부회장, 관리자만 활동 사진을 업로드할 수 있습니다.");
         }
 
         // 파일 유효성 검사
@@ -357,13 +358,14 @@ public class ActivityService {
             throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
         }
 
-        // 회장 또는 관리자 권한 확인
+        // 회장, 부회장, 관리자 권한 확인
         ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
                 .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
 
         if (member.getRole() != ClubMember.MemberRole.PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.VICE_PRESIDENT &&
             member.getRole() != ClubMember.MemberRole.ADMIN) {
-            throw new IllegalArgumentException("회장이나 관리자만 활동 사진을 삭제할 수 있습니다.");
+            throw new IllegalArgumentException("회장, 부회장, 관리자만 활동 사진을 삭제할 수 있습니다.");
         }
 
         // 이미지 찾기
@@ -399,13 +401,14 @@ public class ActivityService {
             throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
         }
 
-        // 회장 또는 관리자 권한 확인
+        // 회장, 부회장, 관리자 권한 확인
         ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
                 .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
 
         if (member.getRole() != ClubMember.MemberRole.PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.VICE_PRESIDENT &&
             member.getRole() != ClubMember.MemberRole.ADMIN) {
-            throw new IllegalArgumentException("회장이나 관리자만 활동 사진을 업데이트할 수 있습니다.");
+            throw new IllegalArgumentException("회장, 부회장, 관리자만 활동 사진을 업데이트할 수 있습니다.");
         }
 
         // 이미지 찾기
