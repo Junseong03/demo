@@ -1,0 +1,439 @@
+{
+	"info": {
+		"_postman_id": "club-platform-collection",
+		"name": "교내 동아리 플랫폼 API",
+		"description": "해커톤용 교내 동아리 플랫폼 백엔드 API 컬렉션",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "인증",
+			"item": [
+				{
+					"name": "회원가입",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newuser@university.ac.kr\",\n    \"password\": \"password123\",\n    \"name\": \"신규학생\",\n    \"major\": \"컴퓨터공학과\",\n    \"interestTags\": [\"개발\", \"프로그래밍\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "signup"]
+						}
+					}
+				},
+				{
+					"name": "로그인",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student1@university.ac.kr\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "홈",
+			"item": [
+				{
+					"name": "홈 추천 (전체)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/home/recommendations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "home", "recommendations"]
+						}
+					}
+				},
+				{
+					"name": "홈 추천 (유저별)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/home/recommendations?userId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "home", "recommendations"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "동아리",
+			"item": [
+				{
+					"name": "동아리 목록 (전체)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"]
+						}
+					}
+				},
+				{
+					"name": "동아리 목록 (중앙만)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?type=CENTRAL",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "type",
+									"value": "CENTRAL"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "동아리 목록 (학과만)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?type=DEPARTMENT",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "type",
+									"value": "DEPARTMENT"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "동아리 목록 (태그 필터)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?type=CENTRAL&tag=개발",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "type",
+									"value": "CENTRAL"
+								},
+								{
+									"key": "tag",
+									"value": "개발"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "동아리 목록 (검색)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs?keyword=알고리즘",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs"],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "알고리즘"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "동아리 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs", "1"]
+						}
+					}
+				},
+				{
+					"name": "동아리 문의 보내기",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message\": \"동아리에 가입하고 싶습니다. 어떻게 신청하나요?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/1/inquiries?userId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs", "1", "inquiries"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "활동",
+			"item": [
+				{
+					"name": "교내 활동 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "교외 활동 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=OUT_SCHOOL",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "OUT_SCHOOL"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "활동 목록 (카테고리 필터)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities?type=IN_SCHOOL&category=CONTEST",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN_SCHOOL"
+								},
+								{
+									"key": "category",
+									"value": "CONTEST"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "활동 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/activities/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "activities", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "캘린더",
+			"item": [
+				{
+					"name": "캘린더 이벤트 조회",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/calendar?from=2024-01-01&to=2024-12-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "calendar"],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "취업 정보",
+			"item": [
+				{
+					"name": "취업 정보 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/jobs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "jobs"]
+						}
+					}
+				},
+				{
+					"name": "취업 정보 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/jobs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "jobs", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "공지방",
+			"item": [
+				{
+					"name": "내가 속한 동아리 공지",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/me/notices?userId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "me", "notices"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "특정 동아리 공지 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/1/notices",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "clubs", "1", "notices"]
+						}
+					}
+				},
+				{
+					"name": "공지 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/notices/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "notices", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "인재 프로필",
+			"item": [
+				{
+					"name": "인재 프로필 목록",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/talents",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "talents"]
+						}
+					}
+				},
+				{
+					"name": "인재 프로필 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/talents/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "talents", "1"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
+
