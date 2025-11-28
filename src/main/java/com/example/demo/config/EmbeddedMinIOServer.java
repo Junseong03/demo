@@ -61,11 +61,14 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
                 
                 if (minioBinaryPath != null && Files.exists(minioBinaryPath)) {
                     minioBinary = minioBinaryPath.toString();
+                    log.info("MinIO 바이너리 다운로드 완료: {}", minioBinary);
                 } else {
                     log.warn("MinIO 바이너리 다운로드에 실패했습니다. MinIO 서버를 수동으로 실행하세요.");
                     log.warn("MinIO 서버가 이미 실행 중인지 확인하세요: {}", endpoint);
                     return;
                 }
+            } else {
+                log.info("기존 MinIO 바이너리 사용: {}", minioBinary);
             }
             
             // MinIO 서버 실행
@@ -79,11 +82,20 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
     
     private String findMinIOBinary() {
         String os = System.getProperty("os.name").toLowerCase();
+        Path minioHome = Paths.get(System.getProperty("user.home"), ".minio");
         
-        // Windows인 경우
+        // 먼저 ~/.minio 디렉토리에서 바이너리 확인 (다운로드된 바이너리)
         if (os.contains("win")) {
-            Path minioBinary = Paths.get(System.getProperty("user.home"), ".minio", "minio.exe");
+            Path minioBinary = minioHome.resolve("minio.exe");
             if (Files.exists(minioBinary)) {
+                log.debug("MinIO 바이너리 발견 (Windows): {}", minioBinary);
+                return minioBinary.toString();
+            }
+        } else {
+            // Linux/Mac
+            Path minioBinary = minioHome.resolve("minio");
+            if (Files.exists(minioBinary) && minioBinary.toFile().canExecute()) {
+                log.debug("MinIO 바이너리 발견 (Linux/Mac): {}", minioBinary);
                 return minioBinary.toString();
             }
         }
@@ -93,9 +105,12 @@ public class EmbeddedMinIOServer implements CommandLineRunner, ApplicationListen
         for (String path : paths) {
             File minioFile = new File(path, "minio");
             if (minioFile.exists() && minioFile.canExecute()) {
+                log.debug("MinIO 바이너리 발견 (시스템 PATH): {}", minioFile.getAbsolutePath());
                 return minioFile.getAbsolutePath();
             }
         }
+        
+        log.debug("MinIO 바이너리를 찾을 수 없습니다.");
         return null;
     }
     
