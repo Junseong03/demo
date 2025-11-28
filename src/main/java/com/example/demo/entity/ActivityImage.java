@@ -28,5 +28,11 @@ public class ActivityImage {
 
     @Builder.Default
     private LocalDateTime uploadedAt = LocalDateTime.now();
+
+    public void updateImageUrl(String imageUrl) {
+        if (imageUrl != null) {
+            this.imageUrl = imageUrl;
+        }
+    }
 }
 

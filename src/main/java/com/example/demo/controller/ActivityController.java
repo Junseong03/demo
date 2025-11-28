@@ -77,6 +77,18 @@ public class ActivityController {
         return ResponseEntity.ok().build();
     }
 
+    // 동아리 활동 사진 업데이트 (교체, imageId 기반, 회장 또는 관리자만 가능)
+    @PutMapping(value = "/clubs/{clubId}/activities/{activityId}/images/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ActivityImageResponse> updateActivityImage(
+            @PathVariable Long clubId,
+            @PathVariable Long activityId,
+            @PathVariable Long imageId,
+            @RequestParam Long userId,
+            @RequestParam("file") MultipartFile file) {
+        ActivityImageResponse response = activityService.updateActivityImage(clubId, activityId, imageId, userId, file);
+        return ResponseEntity.ok(response);
+    }
+
     // 동아리 활동 사진 삭제 (imageId 기반, 회장 또는 관리자만 가능)
     @DeleteMapping("/clubs/{clubId}/activities/{activityId}/images/{imageId}")
     public ResponseEntity<Void> deleteActivityImage(

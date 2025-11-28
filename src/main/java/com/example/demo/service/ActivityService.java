@@ -360,5 +360,78 @@ public class ActivityService {
         // DB에서 이미지 삭제
         activityImageRepository.delete(activityImage);
     }
+
+    // 동아리 활동 사진 업데이트 (교체, imageId 기반)
+    @Transactional
+    public ActivityImageResponse updateActivityImage(Long clubId, Long activityId, Long imageId, Long userId, MultipartFile file) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ResourceNotFoundException("동아리를 찾을 수 없습니다."));
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동을 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 활동이 해당 동아리에 속하는지 확인
+        if (activity.getClub() == null || !activity.getClub().getId().equals(clubId)) {
+            throw new IllegalArgumentException("해당 동아리의 활동이 아닙니다.");
+        }
+
+        // 회장 또는 관리자 권한 확인
+        ClubMember member = clubMemberRepository.findByUserIdAndClubId(userId, clubId)
+                .orElseThrow(() -> new IllegalArgumentException("동아리 부원이 아닙니다."));
+
+        if (member.getRole() != ClubMember.MemberRole.PRESIDENT &&
+            member.getRole() != ClubMember.MemberRole.ADMIN) {
+            throw new IllegalArgumentException("회장이나 관리자만 활동 사진을 업데이트할 수 있습니다.");
+        }
+
+        // 이미지 찾기
+        ActivityImage activityImage = activityImageRepository.findByIdAndActivityId(imageId, activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("활동 사진을 찾을 수 없습니다."));
+
+        // 파일 유효성 검사
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+
+        // 이미지 파일 검증
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename != null) {
+                String lowerFilename = originalFilename.toLowerCase();
+                if (!lowerFilename.endsWith(".jpg") && !lowerFilename.endsWith(".jpeg") &&
+                    !lowerFilename.endsWith(".png") && !lowerFilename.endsWith(".gif") &&
+                    !lowerFilename.endsWith(".webp") && !lowerFilename.endsWith(".bmp")) {
+                    throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+                }
+            } else {
+                throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+            }
+        }
+
+        // 기존 MinIO 파일 삭제
+        String oldFileName = fileStorageService.extractFileNameFromUrl(activityImage.getImageUrl());
+        if (oldFileName != null) {
+            try {
+                fileStorageService.deleteFile(oldFileName);
+            } catch (Exception e) {
+                // MinIO 삭제 실패해도 계속 진행
+            }
+        }
+
+        // 새 파일을 MinIO에 업로드
+        String folder = "clubs/" + clubId + "/activities/" + activityId;
+        String uploadedUrl = fileStorageService.uploadFile(file, folder);
+
+        // DB의 이미지 URL 업데이트
+        activityImage.updateImageUrl(uploadedUrl);
+        activityImageRepository.save(activityImage);
+
+        return ActivityImageResponse.builder()
+                .activityId(activity.getId())
+                .imageUrl(uploadedUrl)
+                .build();
+    }
 }
 

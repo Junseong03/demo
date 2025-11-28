@@ -1103,6 +1103,79 @@
 
 ---
 
+### 4.22 동아리 활동 사진 업데이트 (교체)
+
+**PUT** `/api/clubs/{clubId}/activities/{activityId}/images/{imageId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+- `imageId`: 업데이트할 이미지 ID (활동 상세 조회 응답의 `images` 배열에서 확인)
+
+**Query Parameters:**
+- `userId`: 업데이트하는 사용자 ID (권한 확인용)
+
+**Request:**
+- Content-Type: `multipart/form-data`
+- `file` (required): 새 이미지 파일 (PNG, JPEG 등)
+
+**Response:** `200 OK`
+```json
+{
+  "activityId": 1,
+  "imageUrl": "http://localhost:9000/club-images/clubs/1/activities/1/new-uuid.jpg"
+}
+```
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 활동 사진을 업데이트할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `400 Bad Request`: 파일이 비어있습니다
+- `400 Bad Request`: 이미지 파일만 업로드 가능합니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 활동 사진을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT) 또는 관리자(ADMIN)만 업데이트 가능
+- `imageId`는 활동 상세 조회 응답의 `images` 배열에서 확인할 수 있습니다
+- 기존 MinIO 파일은 자동으로 삭제되고, 새 파일이 업로드됩니다
+- 이미지 ID와 업로드 시간은 유지되고, URL만 업데이트됩니다
+
+---
+
+### 4.23 동아리 활동 사진 삭제
+
+**DELETE** `/api/clubs/{clubId}/activities/{activityId}/images/{imageId}`
+
+**Path Parameters:**
+- `clubId`: 동아리 ID
+- `activityId`: 활동 ID
+- `imageId`: 삭제할 이미지 ID (활동 상세 조회 응답의 `images` 배열에서 확인)
+
+**Query Parameters:**
+- `userId`: 삭제하는 사용자 ID (권한 확인용)
+
+**Response:** `200 OK` (빈 응답)
+
+**에러 응답:**
+- `400 Bad Request`: 회장이나 관리자만 활동 사진을 삭제할 수 있습니다
+- `400 Bad Request`: 동아리 부원이 아닙니다
+- `400 Bad Request`: 해당 동아리의 활동이 아닙니다
+- `404 Not Found`: 동아리를 찾을 수 없습니다
+- `404 Not Found`: 활동을 찾을 수 없습니다
+- `404 Not Found`: 활동 사진을 찾을 수 없습니다
+- `404 Not Found`: 사용자를 찾을 수 없습니다
+
+**참고:**
+- 회장(PRESIDENT) 또는 관리자(ADMIN)만 삭제 가능
+- `imageId`는 활동 상세 조회 응답의 `images` 배열에서 확인할 수 있습니다
+- MinIO에서 파일을 삭제하고, 데이터베이스의 이미지 레코드도 삭제합니다
+
+---
+
 ## 5. 활동 API
 
 ### 5.1 활동 목록
