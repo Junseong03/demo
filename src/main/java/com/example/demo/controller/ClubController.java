@@ -5,6 +5,7 @@ import com.example.demo.service.ClubService;
 import com.example.demo.service.FileStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/api/clubs")
 @RequiredArgsConstructor
+@Slf4j
 public class ClubController {
     private final ClubService clubService;
     private final FileStorageService fileStorageService;
@@ -94,9 +96,15 @@ public class ClubController {
             throw new IllegalArgumentException("파일이 비어있습니다.");
         }
         
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        // 디버깅을 위한 로그
+        log.debug("파일 업로드 요청 - 파일명: {}, Content-Type: {}, 크기: {} bytes", 
+                file.getOriginalFilename(), file.getContentType(), file.getSize());
+        
+        // 이미지 파일 검증 (Content-Type 또는 파일 확장자로 확인)
+        if (!isImageFile(file)) {
+            log.warn("이미지 파일이 아님 - 파일명: {}, Content-Type: {}", 
+                    file.getOriginalFilename(), file.getContentType());
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다. (지원 형식: JPEG, PNG, GIF, WebP, BMP)");
         }
 
         // MinIO에 파일 업로드
@@ -105,6 +113,34 @@ public class ClubController {
         // 동아리 이미지 URL 업데이트
         ClubImageResponse response = clubService.uploadClubImage(clubId, uploadedUrl);
         return ResponseEntity.ok(response);
+    }
+    
+    private boolean isImageFile(MultipartFile file) {
+        // Content-Type으로 확인
+        String contentType = file.getContentType();
+        if (contentType != null && contentType.startsWith("image/")) {
+            log.debug("Content-Type으로 이미지 파일 확인: {}", contentType);
+            return true;
+        }
+        
+        // 파일 확장자로 확인 (Content-Type이 없는 경우 대비)
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            String lowerFilename = originalFilename.toLowerCase();
+            boolean isImage = lowerFilename.endsWith(".jpg") || 
+                            lowerFilename.endsWith(".jpeg") || 
+                            lowerFilename.endsWith(".png") || 
+                            lowerFilename.endsWith(".gif") || 
+                            lowerFilename.endsWith(".webp") ||
+                            lowerFilename.endsWith(".bmp");
+            if (isImage) {
+                log.debug("파일 확장자로 이미지 파일 확인: {}", originalFilename);
+            }
+            return isImage;
+        }
+        
+        log.warn("파일명이 null입니다. 이미지 파일 검증 실패");
+        return false;
     }
 
     @GetMapping("/{clubId}/image/download")
